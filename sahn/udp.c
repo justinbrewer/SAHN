@@ -2,6 +2,7 @@
 #include <sahn/udp.h>
 
 #include <stdlib.h>
+#include <errno.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -49,5 +50,9 @@ int udp_send(uint16_t destination, uint8_t* data, uint32_t data_size){
 
 int udp_recv(uint16_t* source, uint8_t* buffer, uint32_t buffer_size){
   //TODO determine source simulated address
-  return recvfrom(udp_socket,buffer,buffer_size,0,NULL,NULL);
+  int r = recvfrom(udp_socket,buffer,buffer_size,MSG_DONTWAIT,NULL,NULL);
+  if(r & (EAGAIN|EWOULDBLOCK)){
+      return UDP_WOULDBLOCK;
+  }
+  return r;
 }
