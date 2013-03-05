@@ -39,7 +39,7 @@ int udp_send(uint16_t destination, uint8_t* data, uint32_t data_size){
   
   getaddrinfo(node->real_address,node->real_port,&hints,&addr);
 
-  size_sent = sendto(udp_socket,data,data_size,0,addr,sizeof(struct addrinfo));
+  size_sent = sendto(udp_socket,data,data_size,0,addr->ai_addr,addr->ai_addrlen);
 
   freeaddrinfo(addr);
 
