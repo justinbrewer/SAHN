@@ -1,6 +1,8 @@
 #include <sahn/topo.h>
 #include <sahn/udp.h>
 
+#include <stdlib.h>
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -13,7 +15,7 @@ int udp_init(){
 
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = INADDR_ANY;
-  addr.sin_port = htons(local_node->real_port);
+  addr.sin_port = htons(atoi(local_node->real_port));
 
   udp_socket = socket(AF_INET,SOCK_DGRAM,0);
   bind(udp_socket,(struct sockaddr*)&addr,sizeof(struct sockaddr_in));
