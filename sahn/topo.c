@@ -24,7 +24,7 @@ struct topo_node* topo__get_node(uint16_t address){
 
 int topo_init(const char* file, uint16_t local_address){
   int i=0;
-  char addr_buf[64], links_buf[64];
+  char addr_buf[64], port_buf[8], links_buf[64];
   FILE* fp;
 
   topo_nodes = (struct topo_node*)malloc(MAX_NODES*sizeof(struct topo_node));
@@ -35,15 +35,16 @@ int topo_init(const char* file, uint16_t local_address){
   fp = fopen(topo_file,"r");
 
   while(!feof(fp)){
-    fscanf(fp,"Node %d %[^,], %d %d %d links %[^\n]\n",
+    fscanf(fp,"Node %d %[^,], %s %d %d links %[^\n]\n",
 	   &topo_nodes[i].address,
 	   &addr_buf,
-	   &topo_nodes[i].real_port,
+	   &port_buf,
 	   &topo_nodes[i].loc.x,
 	   &topo_nodes[i].loc.y,
 	   &links_buf);
 
     topo_nodes[i].real_address = strdup(addr_buf);
+    topo_nodes[i].real_port = strdup(port_buf);
     
     //TODO process links
 
@@ -67,6 +68,7 @@ int topo_cleanup(){
   for(i=0;i<topo_num_nodes;i++){
     free(topo_nodes[i].links);
     free(topo_nodes[i].real_address);
+    free(topo_nodes[i].real_port);
   }
 
   return 0;
@@ -99,6 +101,7 @@ struct topo_node* topo_copy_node(struct topo_node* node){
   memcpy(res->links,node->links,res->num_links*sizeof(uint16_t));
 
   res->real_address = strdup(node->real_address);
+  res->real_port = strdup(node->real_port);
   
   return res;
 }
@@ -109,6 +112,9 @@ int topo_free_node(struct topo_node* node){
   }
   if(node->real_address != NULL){
     free(node->real_address);
+  }
+  if(node->real_port != NULL){
+    free(node->real_port);
   }
   free(node);
   return 0;

@@ -16,7 +16,7 @@ struct topo_node {
   uint16_t* links;
 
   char* real_address;
-  uint16_t real_port;
+  char* real_port;
 };
 
 int topo_init(const char* file, uint16_t local_address);
