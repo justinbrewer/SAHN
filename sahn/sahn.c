@@ -2,19 +2,15 @@
 
 #define SAHN_MAX_PACKET_SIZE 128
 
-int sahn_init() {
-
-}
-
-int sahn_load_file(const char* file) {
-
-}
-
-int sahn_watch_file(const char* file) {
+int sahn_init(const char* topology_file, uint16_t node_address) {
 
 }
 
 int sahn_cleanup() {
+
+}
+
+int sahn_update_topology(const char* new_file) {
 
 }
 
