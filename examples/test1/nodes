@@ -1,0 +1,4 @@
+Node 1 tux175, 10130 50 120 links 2
+Node 2 tux175, 10131 80 120 links 1 3 4
+Node 3 tux180, 10130 180 170 links 2 4
+Node 4 tux180, 10131 150 60 links 2 3
