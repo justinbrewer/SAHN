@@ -10,14 +10,15 @@ DISTDIR = dist
 
 OBJ = $(OBJDIR)/sahn.o
 
-all: dist
+all: init $(OBJ)
 
-dist: init $(OBJ)
+dist: all
+	mkdir -p $(DISTDIR)
 	cp sahn/sahn.h $(DISTDIR)
 	$(AR) $(AFLAGS) $(DISTDIR)/libsahn.a $(OBJ)
 
 init:
-	mkdir -p $(OBJDIR) $(DISTDIR)
+	mkdir -p $(OBJDIR)
 
 clean:
 	rm -rf $(OBJDIR) $(DISTDIR)
