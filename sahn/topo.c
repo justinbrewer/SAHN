@@ -14,7 +14,7 @@ unsigned int topo_num_nodes;
 uint16_t topo_local_address;
 
 int topo__node_compare(const void* a, const void* b){
-  return ((struct topo_node*)a)->address - ((struct topo_node*)b)->address;
+  return (int)((struct topo_node*)a)->address - (int)((struct topo_node*)b)->address;
 }
 
 int topo_init(const char* file, uint16_t local_address){
