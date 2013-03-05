@@ -1,5 +1,6 @@
 #include <sahn/sahn.h>
 #include <sahn/topo.h>
+#include <sahn/udp.h>
 
 #define SAHN_MAX_PACKET_SIZE 128
 
@@ -8,10 +9,12 @@
 SAHN_EXPORT
 int sahn_init(const char* topology_file, uint16_t node_address) {
   topo_init(topology_file,node_address);
+  udp_init();
 }
 
 SAHN_EXPORT
 int sahn_cleanup() {
+  udp_cleanup();
   topo_cleanup();
 }
 
