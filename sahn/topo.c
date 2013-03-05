@@ -32,7 +32,7 @@ int topo_init(const char* file, uint16_t local_address){
   fp = fopen(topo_file,"r");
 
   while(!feof(fp)){
-    fscanf(fp,"Node %d %s, %d %d %d links %s\n",
+    fscanf(fp,"Node %d %[^,], %d %d %d links %[^\n]\n",
 	   &topo_nodes[i].address,
 	   &addr_buf,
 	   &topo_nodes[i].real_port,
