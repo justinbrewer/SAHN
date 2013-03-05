@@ -11,18 +11,21 @@ char* topo_file;
 struct topo_node* topo_nodes;
 unsigned int topo_num_nodes;
 
-uint16_t topo_local_address;
+struct topo_node* topo_local_node;
 
 int topo__node_compare(const void* a, const void* b){
   return (int)((struct topo_node*)a)->address - (int)((struct topo_node*)b)->address;
+}
+
+struct topo_node* topo__get_node(uint16_t address){
+  struct topo_node key = {.address = address};
+  return bsearch(&key,topo_nodes,topo_num_nodes,sizeof(struct topo_node),topo__node_compare);
 }
 
 int topo_init(const char* file, uint16_t local_address){
   int i=0;
   char addr_buf[64], links_buf[64];
   FILE* fp;
-
-  topo_local_address = local_address;
 
   topo_nodes = (struct topo_node*)malloc(MAX_NODES*sizeof(struct topo_node));
   memset(topo_nodes, 0, MAX_NODES*sizeof(struct topo_node));
@@ -51,6 +54,8 @@ int topo_init(const char* file, uint16_t local_address){
 
   qsort(topo_nodes,topo_num_nodes,sizeof(struct topo_node),topo__node_compare);
 
+  topo_local_node = topo__get_node(local_address);
+
   return 0;
 }
 
@@ -68,13 +73,11 @@ int topo_cleanup(){
 }
 
 struct topo_node* topo_get_local_node(){
-  return topo_get_node(topo_local_address);
+  return topo_copy_node(topo_local_node);
 }
 
 struct topo_node* topo_get_node(uint16_t address){
-  struct topo_node key = {.address = address}, *match;
-  match = bsearch(&key,topo_nodes,topo_num_nodes,sizeof(struct topo_node),topo__node_compare);
-  return topo_copy_node(match);
+  return topo_copy_node(topo__get_node(address));
 }
 
 struct topo_node* topo_alloc_node(){
