@@ -1,13 +1,14 @@
 #include <sahn/sahn.h>
+#include <sahn/topo.h>
 
 #define SAHN_MAX_PACKET_SIZE 128
 
 int sahn_init(const char* topology_file, uint16_t node_address) {
-
+  topo_init(topology_file,node_address);
 }
 
 int sahn_cleanup() {
-
+  topo_cleanup();
 }
 
 int sahn_update_topology(const char* new_file) {
