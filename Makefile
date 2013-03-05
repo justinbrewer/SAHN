@@ -1,5 +1,7 @@
 CC = gcc
 CFLAGS = -c -fpic -fvisibility=hidden -I.
+debug : CFLAGS += -g -O0
+
 LL = gcc
 LFLAGS = -shared
 
@@ -17,12 +19,12 @@ dist: all
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
 	@strip --strip-unneeded $(DISTDIR)/libsahn.so
 
+debug: all
+	@mkdir -p $(BINDIR)
+	$(LL) $(LFLAGS) -o $(BINDIR)/libsahn_d.so $(OBJ)
+
 init:
 	@mkdir -p $(OBJDIR)
-
-bin_init: dist
-	@mkdir -p $(BINDIR)
-	@cp $(DISTDIR)/libsahn.so $(BINDIR)
 
 clean:
 	@rm -rf $(OBJDIR) $(DISTDIR) $(BINDIR)
@@ -35,7 +37,7 @@ $(OBJDIR)/topo.o: sahn/topo.h sahn/topo.c
 
 #====================
 EC = $(CC)
-EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn -I.
+EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -I. -g -O0
 
-test1: bin_init examples/test1/test1.c
+test1: debug examples/test1/test1.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test1 examples/test1/test1.c
