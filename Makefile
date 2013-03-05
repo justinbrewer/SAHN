@@ -1,9 +1,7 @@
 CC = gcc
-CFLAGS = -c -I.
+CFLAGS = -c -fpic -fvisibility=hidden -I.
 LL = gcc
-LFLAGS = 
-AR = ar
-AFLAGS = rcs
+LFLAGS = -shared
 
 OBJDIR = obj
 DISTDIR = dist
@@ -15,7 +13,8 @@ all: init $(OBJ)
 dist: all
 	mkdir -p $(DISTDIR)
 	cp sahn/sahn.h $(DISTDIR)
-	$(AR) $(AFLAGS) $(DISTDIR)/libsahn.a $(OBJ)
+	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
+	strip --strip-unneeded $(DISTDIR)/libsahn.so
 
 init:
 	mkdir -p $(OBJDIR)
