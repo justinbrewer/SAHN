@@ -11,13 +11,13 @@ OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o
 all: init $(OBJ)
 
 dist: all
-	mkdir -p $(DISTDIR)
-	cp sahn/sahn.h $(DISTDIR)
+	@mkdir -p $(DISTDIR)
+	@cp sahn/sahn.h $(DISTDIR)
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
-	strip --strip-unneeded $(DISTDIR)/libsahn.so
+	@strip --strip-unneeded $(DISTDIR)/libsahn.so
 
 init:
-	mkdir -p $(OBJDIR)
+	@mkdir -p $(OBJDIR)
 
 clean:
 	rm -rf $(OBJDIR) $(DISTDIR)
