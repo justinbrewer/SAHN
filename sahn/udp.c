@@ -50,9 +50,5 @@ int udp_send(uint16_t destination, void* data, uint32_t data_size){
 
 int udp_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   //TODO determine source simulated address
-  int r = recvfrom(udp_socket,buffer,buffer_size,MSG_DONTWAIT,NULL,NULL);
-  if(r & (EAGAIN|EWOULDBLOCK)){
-      return UDP_WOULDBLOCK;
-  }
-  return r;
+  return recvfrom(udp_socket,buffer,buffer_size,0,NULL,NULL);
 }

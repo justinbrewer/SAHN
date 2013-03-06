@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS = -c -fpic -fvisibility=hidden -I.
+CFLAGS = -c -fpic -fvisibility=hidden -I. -pthread
 debug : CFLAGS += -g -O0
 
 LL = gcc
-LFLAGS = -shared
+LFLAGS = -shared -pthread
 
 OBJDIR = obj
 DISTDIR = dist

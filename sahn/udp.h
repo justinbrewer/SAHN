@@ -2,8 +2,6 @@
 
 #include <stdint.h>
 
-typedef enum { UDP_WOULDBLOCK=-1 } udp_ret;
-
 int udp_init();
 int udp_cleanup();
 

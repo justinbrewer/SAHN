@@ -33,6 +33,8 @@ struct net_packet net_recv_buffer[BUFFER_LEN];
 pthread_mutex_t net_recv_lock;
 pthread_cond_t net_recv_avail;
 
+pthread_t net_run_thread;
+
 int net__dispatch_packet(struct net_packet* packet){
   int i;
   uint16_t prev_hop = packet->prev_hop;
@@ -42,6 +44,30 @@ int net__dispatch_packet(struct net_packet* packet){
     if(links[i] != prev_hop){
       udp_send(links[i],packet,packet->size);
     }
+  }
+}
+
+void* net__run(void* params){
+  struct net_packet packet = {0};
+
+  while(1){
+    udp_recv(NULL,&packet,sizeof(struct net_packet));
+
+    if(packet.destination = local_address){
+      memcpy(&net_recv_buffer[net_recv_back++],&packet,sizeof(struct net_packet));
+      net_recv_back %= BUFFER_LEN;
+      
+      //TODO: We might need to lock first
+      pthread_cond_signal(&net_recv_avail);
+      
+      continue;
+    }
+    
+    if(--packet.ttl == 0){
+      continue;
+    }
+
+    net__dispatch_packet(&packet);
   }
 }
 
@@ -62,34 +88,16 @@ int net_init(){
 
   pthread_mutex_init(&net_recv_lock,NULL);
   pthread_cond_init(&net_recv_avail,NULL);
+
+  pthread_create(&net_run_thread,NULL,net__run,NULL);
 }
 
 int net_cleanup(){
+  pthread_cancel(net_run_thread);
+
   free(links);
   pthread_mutex_destroy(&net_recv_lock);
   pthread_cond_destroy(&net_recv_avail);
-}
-
-int net_update(){
-  int r;
-  struct net_packet packet = {0};
-  while((r = udp_recv(NULL,&packet,sizeof(struct net_packet))) != UDP_WOULDBLOCK){
-    if(packet.destination = local_address){
-      memcpy(&net_recv_buffer[net_recv_back++],&packet,sizeof(struct net_packet));
-      net_recv_back %= BUFFER_LEN;
-      
-      //TODO: We might need to lock first
-      pthread_cond_signal(&net_recv_avail);
-      
-      continue;
-    }
-    
-    if(--packet.ttl == 0){
-      continue;
-    }
-
-    net__dispatch_packet(&packet);
-  }
 }
 
 int net_send(uint16_t destination, void* data, uint32_t data_size){
