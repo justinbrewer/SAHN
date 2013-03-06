@@ -53,7 +53,7 @@ void* net__run(void* params){
   while(1){
     udp_recv(NULL,&packet,sizeof(struct net_packet));
 
-    if(packet.destination = local_address){
+    if(packet.destination == local_address){
       memcpy(&net_recv_buffer[net_recv_back++],&packet,sizeof(struct net_packet));
       net_recv_back %= BUFFER_LEN;
       
