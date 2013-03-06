@@ -5,6 +5,7 @@
 #include <string.h>
 
 #define MAX_NODES 128
+#define MAX_LINKS 32
 
 char* topo_file;
 
@@ -24,7 +25,7 @@ struct topo_node* topo__get_node(uint16_t address){
 
 int topo_init(const char* file, uint16_t local_address){
   int i=0;
-  char addr_buf[64], port_buf[8], links_buf[64];
+  char addr_buf[64], port_buf[8], links_buf[64], *link;
   FILE* fp;
 
   topo_nodes = (struct topo_node*)malloc(MAX_NODES*sizeof(struct topo_node));
@@ -46,7 +47,13 @@ int topo_init(const char* file, uint16_t local_address){
     topo_nodes[i].real_address = strdup(addr_buf);
     topo_nodes[i].real_port = strdup(port_buf);
     
-    //TODO process links
+    topo_nodes[i].links = (uint16_t*)malloc(MAX_LINKS*sizeof(uint16_t));
+    link = strtok(links_buf," ");
+    while(link != NULL){
+      topo_nodes[i].links[topo_nodes[i].num_links++] = atoi(link);
+      link = strtok(NULL," ");
+    }
+    topo_nodes[i].links = (uint16_t*)realloc(topo_nodes[i].links,topo_nodes[i].num_links*sizeof(uint16_t));
 
     i++;
   }
