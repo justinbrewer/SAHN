@@ -30,7 +30,7 @@ int udp_cleanup(){
   close(udp_socket);
 }
 
-int udp_send(uint16_t destination, uint8_t* data, uint32_t data_size){
+int udp_send(uint16_t destination, void* data, uint32_t data_size){
   int size_sent;
   struct addrinfo hints = {0}, *addr;
   struct topo_node* node = topo_get_local_node(destination);
@@ -48,7 +48,7 @@ int udp_send(uint16_t destination, uint8_t* data, uint32_t data_size){
   return size_sent;
 }
 
-int udp_recv(uint16_t* source, uint8_t* buffer, uint32_t buffer_size){
+int udp_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   //TODO determine source simulated address
   int r = recvfrom(udp_socket,buffer,buffer_size,MSG_DONTWAIT,NULL,NULL);
   if(r & (EAGAIN|EWOULDBLOCK)){

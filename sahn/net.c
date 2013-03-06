@@ -40,7 +40,7 @@ int net__dispatch_packet(struct net_packet* packet){
   
   for(i=0;i<num_links;i++){
     if(links[i] != prev_hop){
-      udp_send(links[i],(uint8_t*)packet,packet->size);
+      udp_send(links[i],packet,packet->size);
     }
   }
 }
@@ -73,7 +73,7 @@ int net_cleanup(){
 int net_update(){
   int r;
   struct net_packet packet = {0};
-  while((r = udp_recv(NULL,(uint8_t*)&packet,sizeof(struct net_packet))) != UDP_WOULDBLOCK){
+  while((r = udp_recv(NULL,&packet,sizeof(struct net_packet))) != UDP_WOULDBLOCK){
     if(packet.destination = local_address){
       memcpy(&net_recv_buffer[net_recv_back++],&packet,sizeof(struct net_packet));
       net_recv_back %= BUFFER_LEN;
@@ -92,7 +92,7 @@ int net_update(){
   }
 }
 
-int net_send(uint16_t destination, uint8_t* data, uint32_t data_size){
+int net_send(uint16_t destination, void* data, uint32_t data_size){
   static uint16_t seq = 0;
   struct net_packet packet = {0};
 
@@ -113,7 +113,7 @@ int net_send(uint16_t destination, uint8_t* data, uint32_t data_size){
   return data_size;
 }
 
-int net_recv(uint16_t* source, uint8_t* buffer, uint32_t buffer_size){
+int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   int size;
   struct net_packet* packet;
 
