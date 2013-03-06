@@ -132,6 +132,7 @@ int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   }
 
   packet = &net_recv_buffer[net_recv_front++];
+  net_recv_front %= BUFFER_LEN;
 
   pthread_mutex_unlock(&net_recv_lock);
 
