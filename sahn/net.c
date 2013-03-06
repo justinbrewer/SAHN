@@ -127,7 +127,9 @@ int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
 
   pthread_mutex_unlock(&net_recv_lock);
 
-  *source = packet->source;
+  if(source != NULL){
+    *source = packet->source;
+  }
 
   //TODO: What should we do if the buffer is smaller than the packet?
   size = packet->size - HEADER_SIZE;
