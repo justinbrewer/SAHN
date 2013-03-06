@@ -47,3 +47,6 @@ EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -I. -g -O0
 
 test1: debug examples/test1/test1.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test1 examples/test1/test1.c
+
+test2: debug examples/test2/test2.c
+	$(EC) $(EFLAGS) -o $(BINDIR)/test2 examples/test2/test2.c
