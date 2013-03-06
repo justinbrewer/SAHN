@@ -53,3 +53,6 @@ test2: debug examples/test2/test2.c
 
 test3: debug examples/test3/test3.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test3 examples/test3/test3.c
+
+test4: debug examples/test4/test4.c
+	$(EC) $(EFLAGS) -o $(BINDIR)/test4 examples/test4/test4.c
