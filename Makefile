@@ -9,7 +9,7 @@ OBJDIR = obj
 DISTDIR = dist
 BINDIR = bin
 
-OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o
+OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o
 
 all: init $(OBJ)
 
@@ -37,6 +37,9 @@ $(OBJDIR)/topo.o: sahn/topo.h sahn/topo.c
 
 $(OBJDIR)/udp.o: sahn/udp.h sahn/udp.c sahn/topo.h
 	$(CC) $(CFLAGS) -o $(OBJDIR)/udp.o sahn/udp.c
+
+$(OBJDIR)/net.o: sahn/net.h sahn/net.c sahn/topo.h sahn/udp.h
+	$(CC) $(CFLAGS) -o $(OBJDIR)/net.o sahn/net.c
 
 #====================
 EC = $(CC)
