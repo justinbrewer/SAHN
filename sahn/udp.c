@@ -33,7 +33,7 @@ int udp_cleanup(){
 int udp_send(uint16_t destination, void* data, uint32_t data_size){
   int size_sent;
   struct addrinfo hints = {0}, *addr;
-  struct topo_node* node = topo_get_local_node(destination);
+  struct topo_node* node = topo_get_node(destination);
 
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_DGRAM;
