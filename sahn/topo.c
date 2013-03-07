@@ -89,6 +89,10 @@ struct topo_node* topo_get_node(uint16_t address){
   return topo_copy_node(topo__get_node(address));
 }
 
+unsigned int topo_get_num_nodes(){
+  return topo_num_nodes;
+}
+
 struct topo_node* topo_alloc_node(){
   struct topo_node* node = (struct topo_node*)malloc(sizeof(struct topo_node));
   memset(node,0,sizeof(struct topo_node));

@@ -24,6 +24,7 @@ int topo_cleanup();
 
 struct topo_node* topo_get_local_node();
 struct topo_node* topo_get_node(uint16_t address);
+unsigned int topo_get_num_nodes();
 
 struct topo_node* topo_alloc_node();
 struct topo_node* topo_copy_node(struct topo_node* node);
