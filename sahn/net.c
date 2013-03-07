@@ -41,7 +41,7 @@ int net__dispatch_packet(struct net_packet* packet){
   packet->prev_hop = local_address;
   
   for(i=0;i<num_links;i++){
-    if(links[i] != prev_hop){
+    if(links[i] != prev_hop && links[i] != packet->source){
       udp_send(links[i],packet,packet->size);
     }
   }
