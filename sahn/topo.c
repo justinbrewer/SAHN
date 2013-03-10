@@ -78,6 +78,8 @@ int topo_cleanup(){
     free(topo_nodes[i].real_port);
   }
 
+  free(topo_nodes);
+
   return 0;
 }
 

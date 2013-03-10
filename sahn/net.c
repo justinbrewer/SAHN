@@ -143,6 +143,7 @@ int net_init(){
 
 int net_cleanup(){
   pthread_cancel(net_run_thread);
+  pthread_join(net_run_thread,NULL);
 
   free(seq_table);
   free(links);
