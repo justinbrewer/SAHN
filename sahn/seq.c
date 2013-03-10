@@ -1,4 +1,4 @@
-#include <sahn/seq.h>
+#include "seq.h"
 
 #include <stdlib.h>
 #include <string.h>

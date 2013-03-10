@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -c -fpic -fvisibility=hidden -I. -pthread
+CFLAGS = -c -fpic -fvisibility=hidden -Isahn -pthread
 debug : CFLAGS += -g -O0
 
 LL = gcc
@@ -46,7 +46,7 @@ $(OBJDIR)/seq.o: sahn/seq.h sahn/seq.c
 
 #====================
 EC = $(CC)
-EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -I. -g -O0
+EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -Isahn -g -O0
 
 test1: debug examples/test1/test1.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test1 examples/test1/test1.c
