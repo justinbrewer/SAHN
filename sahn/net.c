@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 
 #define MAX_PAYLOAD 116
 #define BUFFER_LEN 128
@@ -39,14 +40,31 @@ pthread_cond_t net_recv_avail;
 
 pthread_t net_run_thread;
 
+int net__hton(struct net_packet* packet){
+  packet->source = htons(packet->source);
+  packet->destination = htons(packet->destination);
+  packet->prev_hop = htons(packet->prev_hop);
+  packet->seq = htons(packet->seq);
+}
+
+int net__ntoh(struct net_packet* packet){
+  packet->source = ntohs(packet->source);
+  packet->destination = ntohs(packet->destination);
+  packet->prev_hop = ntohs(packet->prev_hop);
+  packet->seq = ntohs(packet->seq);
+}
+
 int net__dispatch_packet(struct net_packet* packet){
   int i;
-  uint16_t prev_hop = packet->prev_hop;
+  uint16_t prev_hop = packet->prev_hop, source = packet->source;
+  uint8_t size = packet->size;
   packet->prev_hop = local_address;
+
+  net__hton(packet);
   
   for(i=0;i<num_links;i++){
-    if(links[i] != prev_hop && links[i] != packet->source){
-      udp_send(links[i],packet,packet->size);
+    if(links[i] != prev_hop && links[i] != source){
+      udp_send(links[i],packet,size);
     }
   }
 }
@@ -56,6 +74,7 @@ void* net__run(void* params){
 
   while(1){
     udp_recv(NULL,&packet,sizeof(struct net_packet));
+    net__ntoh(&packet);
 
     if(!seq_check(packet.source,packet.seq)){
       continue;
