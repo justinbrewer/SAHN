@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+//TODO: Tweak these values
+#define THR_HIGH (65520)
+#define THR_LOW (16)
+
 struct seq_entry {
   uint16_t addr;
   uint16_t seq;
@@ -54,7 +58,7 @@ int seq_check(uint16_t addr, uint16_t seq){
     return 1;
   }
 
-  if(match->seq < seq){
+  if(match->seq < seq || (match->seq > THR_HIGH && seq < THR_LOW)){
     match->seq = seq;
     return 1;
   }
