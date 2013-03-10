@@ -35,7 +35,7 @@ struct net_seq_entry* seq_table;
 
 volatile unsigned int net_recv_front;
 volatile unsigned int net_recv_back;
-struct net_packet net_recv_buffer[BUFFER_LEN];
+struct net_packet* net_recv_buffer;
 
 pthread_mutex_t net_recv_lock;
 pthread_cond_t net_recv_avail;
@@ -118,6 +118,8 @@ void* net__run(void* params){
 int net_init(){
   net_recv_front = 0;
   net_recv_back = 0;
+
+  net_recv_buffer = (struct net_packet*)malloc(BUFFER_LEN*sizeof(struct net_packet));
   memset(net_recv_buffer,0,BUFFER_LEN*sizeof(struct net_packet));
 
   struct topo_node* node = topo_get_local_node();
@@ -147,6 +149,8 @@ int net_cleanup(){
 
   free(seq_table);
   free(links);
+  free(net_recv_buffer);
+
   pthread_mutex_destroy(&net_recv_lock);
   pthread_cond_destroy(&net_recv_avail);
 }
