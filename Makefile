@@ -1,3 +1,5 @@
+VERSION = 0.2
+
 CC = gcc
 CFLAGS = -c -fpic -fvisibility=hidden -Isahn -pthread
 debug : CFLAGS += -g -O0
@@ -6,28 +8,49 @@ LL = gcc
 LFLAGS = -shared -pthread
 
 OBJDIR = obj
-DISTDIR = dist
+DISTDIR = libsahn-$(VERSION)
 BINDIR = bin
 
 OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o $(OBJDIR)/seq.o
 
-all: init $(OBJ)
+all: $(OBJDIR) $(OBJ)
 
-dist: all
+dist: $(DISTDIR).tar.gz
+
+debug: $(BINDIR) $(BINDIR)/libsahn_d.so
+
+clean:
+	@rm -rf $(OBJDIR) $(DISTDIR){,.tar.gz} $(BINDIR)
+
+#====================
+
+$(OBJDIR):
+	@mkdir -p $(OBJDIR)
+
+$(DISTDIR):
 	@mkdir -p $(DISTDIR)
+
+$(BINDIR):
+	@mkdir -p $(BINDIR)
+
+#====================
+
+$(DISTDIR).tar.gz: $(DISTDIR) $(DISTDIR)/sahn.h $(DISTDIR)/libsahn.so
+	tar czvf $(DISTDIR).tar.gz $(DISTDIR)
+
+$(DISTDIR)/sahn.h: sahn/sahn.h
 	@cp sahn/sahn.h $(DISTDIR)
+
+$(DISTDIR)/libsahn.so: all
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
 	@strip --strip-unneeded $(DISTDIR)/libsahn.so
 
-debug: all
-	@mkdir -p $(BINDIR)
+#====================
+
+$(BINDIR)/libsahn_d.so: all
 	$(LL) $(LFLAGS) -o $(BINDIR)/libsahn_d.so $(OBJ)
 
-init:
-	@mkdir -p $(OBJDIR)
-
-clean:
-	@rm -rf $(OBJDIR) $(DISTDIR) $(BINDIR)
+#====================
 
 $(OBJDIR)/sahn.o: sahn/sahn.h sahn/sahn.c sahn/topo.h sahn/udp.h
 	$(CC) $(CFLAGS) -o $(OBJDIR)/sahn.o sahn/sahn.c
