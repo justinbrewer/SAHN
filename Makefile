@@ -36,7 +36,7 @@ $(BINDIR):
 #====================
 
 $(DISTDIR).tar.gz: $(DISTDIR) $(DISTDIR)/sahn.h $(DISTDIR)/libsahn.so
-	tar czvf $(DISTDIR).tar.gz $(DISTDIR)
+	@tar czf $(DISTDIR).tar.gz $(DISTDIR)
 
 $(DISTDIR)/sahn.h: sahn/sahn.h
 	@cp sahn/sahn.h $(DISTDIR)
