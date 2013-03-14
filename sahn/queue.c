@@ -43,7 +43,7 @@ int queue_destroy(struct queue_t* queue){
   free(queue);
 }
 
-int queue_push(struct queue_t* queue, void* element){
+unsigned int queue_push(struct queue_t* queue, void* element){
   struct queue_node_t* node = queue__create_node(element);
 
   if(queue->len == 0){
