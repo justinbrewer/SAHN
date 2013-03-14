@@ -61,7 +61,7 @@ $(OBJDIR)/topo.o: sahn/topo.h sahn/topo.c
 $(OBJDIR)/udp.o: sahn/udp.h sahn/udp.c sahn/topo.h
 	$(CC) $(CFLAGS) -o $(OBJDIR)/udp.o sahn/udp.c
 
-$(OBJDIR)/net.o: sahn/net.h sahn/net.c sahn/topo.h sahn/udp.h sahn/seq.h
+$(OBJDIR)/net.o: sahn/net.h sahn/net.c sahn/topo.h sahn/udp.h sahn/seq.h sahn/queue.h
 	$(CC) $(CFLAGS) -o $(OBJDIR)/net.o sahn/net.c
 
 $(OBJDIR)/seq.o: sahn/seq.h sahn/seq.c
