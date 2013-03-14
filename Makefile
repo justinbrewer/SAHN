@@ -71,14 +71,14 @@ $(OBJDIR)/seq.o: sahn/seq.h sahn/seq.c
 EC = $(CC)
 EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -Isahn -g -O0
 
-test1: debug examples/test1/test1.c
+$(BINDIR)/test1: examples/test1/test1.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test1 examples/test1/test1.c
 
-test2: debug examples/test2/test2.c
+$(BINDIR)/test2: examples/test2/test2.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test2 examples/test2/test2.c
 
-test3: debug examples/test3/test3.c
+$(BINDIR)/test3: examples/test3/test3.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test3 examples/test3/test3.c
 
-test4: debug examples/test4/test4.c
+$(BINDIR)/test4: examples/test4/test4.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test4 examples/test4/test4.c
