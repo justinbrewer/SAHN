@@ -1,5 +1,6 @@
 #include "queue.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -9,7 +10,6 @@ struct queue_node_t {
 };
 
 struct queue_t {
-  size_t element_size;
   unsigned int len;
 
   struct queue_node_t* front;
