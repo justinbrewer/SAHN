@@ -13,7 +13,7 @@ BINDIR = bin
 
 OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o $(OBJDIR)/seq.o
 
-all: $(OBJDIR) $(OBJ)
+all: debug
 
 dist: $(DISTDIR).tar.gz
 
@@ -41,13 +41,13 @@ $(DISTDIR).tar.gz: $(DISTDIR) $(DISTDIR)/sahn.h $(DISTDIR)/libsahn.so
 $(DISTDIR)/sahn.h: sahn/sahn.h
 	@cp sahn/sahn.h $(DISTDIR)
 
-$(DISTDIR)/libsahn.so: all
+$(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJ)
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
 	@strip --strip-unneeded $(DISTDIR)/libsahn.so
 
 #====================
 
-$(BINDIR)/libsahn_d.so: all
+$(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJ)
 	$(LL) $(LFLAGS) -o $(BINDIR)/libsahn_d.so $(OBJ)
 
 #====================
