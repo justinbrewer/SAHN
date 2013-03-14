@@ -1,4 +1,4 @@
-VERSION = 0.2
+VERSION = $(shell git rev-parse --short HEAD)
 
 CC = gcc
 CFLAGS = -c -fpic -fvisibility=hidden -Isahn -pthread
