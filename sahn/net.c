@@ -1,4 +1,5 @@
 #include "net.h"
+#include "queue.h"
 #include "seq.h"
 #include "topo.h"
 #include "udp.h"
@@ -31,12 +32,7 @@ uint16_t local_address;
 uint16_t num_links;
 uint16_t* links;
 
-volatile unsigned int net_recv_front;
-volatile unsigned int net_recv_back;
-struct net_packet* net_recv_buffer;
-
-pthread_mutex_t net_recv_lock;
-pthread_cond_t net_recv_avail;
+struct queue_t* net_recv_queue;
 
 pthread_t net_run_thread;
 
@@ -52,6 +48,12 @@ int net__ntoh(struct net_packet* packet){
   packet->destination = ntohs(packet->destination);
   packet->prev_hop = ntohs(packet->prev_hop);
   packet->seq = ntohs(packet->seq);
+}
+
+struct net_packet* net__copy_packet(struct net_packet* in){
+  struct net_packet* out = (struct net_packet*)malloc(sizeof(struct net_packet));
+  memcpy(out,in,sizeof(struct net_packet));
+  return out;
 }
 
 int net__dispatch_packet(struct net_packet* packet){
@@ -81,12 +83,7 @@ void* net__run(void* params){
     }
 
     if(packet.destination == local_address){
-      memcpy(&net_recv_buffer[net_recv_back++],&packet,sizeof(struct net_packet));
-      net_recv_back %= BUFFER_LEN;
-      
-      //TODO: We might need to lock first
-      pthread_cond_signal(&net_recv_avail);
-      
+      queue_push(net_recv_queue,net__copy_packet(&packet));
       continue;
     }
 
@@ -95,11 +92,7 @@ void* net__run(void* params){
 }
 
 int net_init(){
-  net_recv_front = 0;
-  net_recv_back = 0;
-
-  net_recv_buffer = (struct net_packet*)malloc(BUFFER_LEN*sizeof(struct net_packet));
-  memset(net_recv_buffer,0,BUFFER_LEN*sizeof(struct net_packet));
+  net_recv_queue = queue_create();
 
   struct topo_node* node = topo_get_local_node();
   
@@ -113,9 +106,6 @@ int net_init(){
 
   seq_init(topo_get_num_nodes());
 
-  pthread_mutex_init(&net_recv_lock,NULL);
-  pthread_cond_init(&net_recv_avail,NULL);
-
   pthread_create(&net_run_thread,NULL,net__run,NULL);
 }
 
@@ -126,10 +116,8 @@ int net_cleanup(){
   seq_cleanup();
 
   free(links);
-  free(net_recv_buffer);
 
-  pthread_mutex_destroy(&net_recv_lock);
-  pthread_cond_destroy(&net_recv_avail);
+  queue_destroy(net_recv_queue);
 }
 
 int net_send(uint16_t destination, void* data, uint32_t data_size){
@@ -156,16 +144,7 @@ int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   int size;
   struct net_packet* packet;
 
-  pthread_mutex_lock(&net_recv_lock);
-  
-  while(net_recv_front == net_recv_back){
-    pthread_cond_wait(&net_recv_avail,&net_recv_lock);
-  }
-
-  packet = &net_recv_buffer[net_recv_front++];
-  net_recv_front %= BUFFER_LEN;
-
-  pthread_mutex_unlock(&net_recv_lock);
+  packet = queue_pop(net_recv_queue);
 
   if(source != NULL){
     *source = packet->source;
@@ -175,6 +154,8 @@ int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   size = packet->size - HEADER_SIZE;
 
   memcpy(buffer,packet->payload,size);
+
+  free(packet);
 
   return size;
 }
