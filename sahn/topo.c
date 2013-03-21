@@ -7,6 +7,8 @@
 #define MAX_NODES 128
 #define MAX_LINKS 32
 
+#define DROP_RANGE 128
+
 char* topo_file;
 
 struct topo_node* topo_nodes;
@@ -93,6 +95,22 @@ struct topo_node* topo_get_node(uint16_t address){
 
 unsigned int topo_get_num_nodes(){
   return topo_num_nodes;
+}
+
+//TODO: Revise formula (d^4?)
+int topo_drop_rate(uint16_t remote_node){
+  int x, y;
+  const struct topo_coord* a = &topo_local_node->loc;
+  const struct topo_coord* b = &topo__get_node(remote_node)->loc;
+
+  x = a->x - b->x;
+  x *= x;
+
+  y = a->y - b->y;
+  y *= y;
+
+  //Should hopefully optimize to (x+y)>>6;
+  return (x + y) * (TOPO_PRANGE/(DROP_RANGE*DROP_RANGE));
 }
 
 struct topo_node* topo_alloc_node(){
