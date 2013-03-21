@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #define TOPO_PRANGE 256
+#define TOPO_PMASK 0xFFFF
 
 struct topo_coord {
   uint16_t x;
