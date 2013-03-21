@@ -97,7 +97,6 @@ unsigned int topo_get_num_nodes(){
   return topo_num_nodes;
 }
 
-//TODO: Revise formula (d^4?)
 int topo_drop_rate(uint16_t remote_node){
   int x, y;
   const struct topo_coord* a = &topo_local_node->loc;
@@ -105,12 +104,12 @@ int topo_drop_rate(uint16_t remote_node){
 
   x = a->x - b->x;
   x *= x;
-
   y = a->y - b->y;
   y *= y;
+  x += y; 
+  x *= x;
 
-  //Should hopefully optimize to (x+y)>>6;
-  return (x + y) * (TOPO_PRANGE/(DROP_RANGE*DROP_RANGE));
+  return x >> 20; //TODO: This makes drop range unadjustable (must be 128)
 }
 
 struct topo_node* topo_alloc_node(){
