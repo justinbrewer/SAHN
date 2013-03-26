@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <arpa/inet.h>
 
 #define MAX_PAYLOAD 116
@@ -53,7 +54,7 @@ struct net_packet* net__copy_packet(struct net_packet* in){
 
 int net__dispatch_packet(struct net_packet* packet){
   int i;
-  uint16_t prev_hop = packet->prev_hop, source = packet->source;
+  uint16_t prev_hop = packet->prev_hop, source = packet->source, destination = packet->destination, seq = packet->seq;
   uint8_t size = packet->size;
   packet->prev_hop = local_address;
 
@@ -62,7 +63,10 @@ int net__dispatch_packet(struct net_packet* packet){
   for(i=0;i<num_links;i++){
     if(links[i] != prev_hop && links[i] != source){
       if(rand() & TOPO_PMASK >= topo_drop_rate(links[i])){
+	printf("(%d) OUT:\t(%d)\t(%d)\t%d:%d\t-> %d\n",local_address,links[i],prev_hop,source,seq,destination);
 	udp_send(links[i],packet,size);
+      } else {
+	printf("(%d) DROP:\t(%d)\t(%d)\t%d:%d\t-> %d\n",local_address,links[i],prev_hop,source,seq,destination);
       }
     }
   }
@@ -76,8 +80,11 @@ void* net__run(void* params){
     net__ntoh(&packet);
 
     if(!seq_check(packet.source,packet.seq)){
+      printf("(%d) OLD:\t\t(%d)\t%d:%d\t-> %d\n",local_address,packet.prev_hop,packet.source,packet.seq,packet.destination);
       continue;
     }
+
+    printf("(%d) IN: \t\t(%d)\t%d:%d\t-> %d\n",local_address,packet.prev_hop,packet.source,packet.seq,packet.destination);
 
     if(packet.destination == local_address){
       queue_push(net_recv_queue,net__copy_packet(&packet));
