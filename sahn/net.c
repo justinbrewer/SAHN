@@ -23,11 +23,6 @@ struct net_packet {
   uint8_t payload[MAX_PAYLOAD];
 } __attribute__((__packed__));
 
-struct net_seq_entry {
-  uint16_t addr;
-  uint16_t seq;
-};
-
 uint16_t local_address;
 uint16_t num_links;
 uint16_t* links;
