@@ -74,14 +74,18 @@ $(OBJDIR)/queue.o: sahn/queue.h sahn/queue.c
 EC = $(CC)
 EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -Isahn -g -O0
 
+test1: debug $(BINDIR)/test1
 $(BINDIR)/test1: examples/test1/test1.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test1 examples/test1/test1.c
 
+test2: debug $(BINDIR)/test2
 $(BINDIR)/test2: examples/test2/test2.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test2 examples/test2/test2.c
 
+test3: debug $(BINDIR)/test3
 $(BINDIR)/test3: examples/test3/test3.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test3 examples/test3/test3.c
 
+test4: debug $(BINDIR)/test4
 $(BINDIR)/test4: examples/test4/test4.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test4 examples/test4/test4.c
