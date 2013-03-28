@@ -97,7 +97,7 @@ unsigned int topo_get_num_nodes(){
   return topo_num_nodes;
 }
 
-int topo_drop_rate(uint16_t remote_node){
+uint32_t topo_drop_rate(uint16_t remote_node){
   int x, y;
   const struct topo_coord* a = &topo_local_node->loc;
   const struct topo_coord* b = &topo__get_node(remote_node)->loc;

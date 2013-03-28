@@ -29,7 +29,7 @@ struct topo_node* topo_get_local_node();
 struct topo_node* topo_get_node(uint16_t address);
 unsigned int topo_get_num_nodes();
 
-int topo_drop_rate(uint16_t remote_node);
+uint32_t topo_drop_rate(uint16_t remote_node);
 
 struct topo_node* topo_alloc_node();
 struct topo_node* topo_copy_node(struct topo_node* node);
