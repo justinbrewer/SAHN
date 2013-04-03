@@ -51,6 +51,8 @@ struct cache_t* cache_create(cache_free_t free_callback){
 
   cache->sort = true;
   cache->free_callback = free_callback;
+
+  return cache;
 }
 
 int cache_destroy(struct cache_t* cache){
@@ -64,6 +66,7 @@ int cache_destroy(struct cache_t* cache){
 
   free(cache->entries);
   free(cache);
+  return 0;
 }
 
 int cache_enable_sort(struct cache_t* cache){
@@ -71,10 +74,13 @@ int cache_enable_sort(struct cache_t* cache){
     cache->sort = true;
     qsort(cache->entries,cache->num,sizeof(struct cache_entry_t),cache__compare);
   }
+
+  return 0;
 }
 
 int cache_disable_sort(struct cache_t* cache){
   cache->sort = false;
+  return 0;
 }
 
 void* cache_get(struct cache_t* cache, uint32_t key){
@@ -111,4 +117,6 @@ int cache_set(struct cache_t* cache, uint32_t key, void* val){
 
     entry->val = val;
   }
+
+  return 0;
 }
