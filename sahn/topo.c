@@ -70,7 +70,7 @@ int topo_init(const char* file, uint16_t local_address){
 }
 
 int topo_cleanup(){
-  int i;
+  unsigned int i;
 
   free(topo_file);
 
