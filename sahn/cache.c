@@ -24,7 +24,7 @@ int cache__compare(const void* a, const void* b){
 }
 
 struct cache_entry_t* cache__find(struct cache_t* cache, uint32_t key){
-  int i;
+  unsigned int i;
   struct cache_entry_t _key = {.key=key};
   
   if(cache->sort){
@@ -56,7 +56,7 @@ struct cache_t* cache_create(cache_free_t free_callback){
 }
 
 int cache_destroy(struct cache_t* cache){
-  int i;
+  unsigned int i;
   
   if(cache->free_callback != NULL){
      for(i=0;i<cache->num;i++){
