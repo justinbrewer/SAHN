@@ -134,7 +134,7 @@ int cache_set(struct cache_t* cache, uint32_t key, void* val){
     entry->val = val;
   }
 
-  pthread_rdlock_unlock(&cache->lock);
+  pthread_rwlock_unlock(&cache->lock);
 
   return 0;
 }
