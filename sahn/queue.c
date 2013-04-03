@@ -33,6 +33,7 @@ int queue__destroy_node(struct queue_node_t* node){
     queue__destroy_node(node->next);
     free(node);
   }
+  return 0;
 }
 
 struct queue_t* queue_create(){
@@ -52,6 +53,7 @@ int queue_destroy(struct queue_t* queue){
   pthread_cond_destroy(&queue->avail);
 
   free(queue);
+  return 0;
 }
 
 unsigned int queue_push(struct queue_t* queue, void* element){
