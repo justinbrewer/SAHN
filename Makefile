@@ -11,7 +11,8 @@ OBJDIR = obj
 DISTDIR = libsahn-$(VERSION)
 BINDIR = bin
 
-OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o $(OBJDIR)/seq.o $(OBJDIR)/queue.o
+OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o \
+      $(OBJDIR)/seq.o $(OBJDIR)/queue.o $(OBJDIR)/cache.o
 
 all: debug
 
@@ -69,6 +70,9 @@ $(OBJDIR)/seq.o: sahn/seq.h sahn/seq.c
 
 $(OBJDIR)/queue.o: sahn/queue.h sahn/queue.c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/queue.o sahn/queue.c
+
+$(OBJDIR)/cache.o: sahn/cache.h sahn/cache.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/cache.o sahn/cache.c
 
 #====================
 EC = $(CC)
