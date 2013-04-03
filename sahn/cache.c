@@ -17,6 +17,7 @@ struct cache_t {
   
   bool sort;
   cache_free_t free_callback;
+  pthread_rwlock_t lock;
 };
 
 int cache__compare(const void* a, const void* b){
@@ -52,11 +53,15 @@ struct cache_t* cache_create(cache_free_t free_callback){
   cache->sort = true;
   cache->free_callback = free_callback;
 
+  pthread_rwlock_init(&cache->lock,NULL);
+
   return cache;
 }
 
 int cache_destroy(struct cache_t* cache){
   unsigned int i;
+
+  pthread_rwlock_destroy(&cache->lock);
   
   if(cache->free_callback != NULL){
      for(i=0;i<cache->num;i++){
@@ -84,17 +89,28 @@ int cache_disable_sort(struct cache_t* cache){
 }
 
 void* cache_get(struct cache_t* cache, uint32_t key){
-  struct cache_entry_t* entry = cache__find(cache,key);
+  void* val = NULL;
+  struct cache_entry_t* entry;
 
-  if(entry == NULL){
-    return NULL;
+  pthread_rwlock_rdlock(&cache->lock);
+
+  entry = cache__find(cache,key);
+
+  if(entry != NULL){
+    val = entry->val;
   }
 
-  return entry->val;
+  pthread_rwlock_unlock(&cache->lock);
+
+  return val;
 }
 
 int cache_set(struct cache_t* cache, uint32_t key, void* val){
-  struct cache_entry_t* entry = cache__find(cache,key);
+  struct cache_entry_t* entry;
+
+  pthread_rwlock_wrlock(&cache->lock);
+
+  entry = cache__find(cache,key);
 
   if(entry == NULL){
     if(cache->num == cache->cap){
@@ -117,6 +133,8 @@ int cache_set(struct cache_t* cache, uint32_t key, void* val){
 
     entry->val = val;
   }
+
+  pthread_rdlock_unlock(&cache->lock);
 
   return 0;
 }
