@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -33,6 +34,7 @@ int udp_init(){
 int udp_cleanup(){
   cache_destroy(addr_cache);
   close(udp_socket);
+  return 0;
 }
 
 int udp_send(uint16_t destination, void* data, uint32_t data_size){

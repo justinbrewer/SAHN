@@ -27,10 +27,13 @@ int seq_init(unsigned int size){
 
   seq_table = (struct seq_entry*)malloc(seq_cap*sizeof(struct seq_entry));
   memset(seq_table,0,seq_cap*sizeof(struct seq_entry));
+
+  return 0;
 }
 
 int seq_cleanup(){
   free(seq_table);
+  return 0;
 }
 
 int seq_check(uint16_t addr, uint16_t seq){

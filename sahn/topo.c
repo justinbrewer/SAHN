@@ -38,13 +38,13 @@ int topo_init(const char* file, uint16_t local_address){
   fp = fopen(topo_file,"r");
 
   while(!feof(fp)){
-    fscanf(fp,"Node %d %[^,], %s %d %d links %[^\n]\n",
+    fscanf(fp,"Node %hu %64[^,], %8s %hd %hd links %64[^\n]\n",
 	   &topo_nodes[i].address,
-	   &addr_buf,
-	   &port_buf,
+	   addr_buf,
+	   port_buf,
 	   &topo_nodes[i].loc.x,
 	   &topo_nodes[i].loc.y,
-	   &links_buf);
+	   links_buf);
 
     topo_nodes[i].real_address = strdup(addr_buf);
     topo_nodes[i].real_port = strdup(port_buf);
@@ -123,7 +123,6 @@ struct topo_node* topo_copy_node(struct topo_node* node){
     return NULL;
   }
 
-  int i;
   struct topo_node* res = topo_alloc_node();
   memcpy(res,node,sizeof(struct topo_node));
 

@@ -32,14 +32,14 @@ struct queue_t* net_recv_queue;
 
 pthread_t net_run_thread;
 
-int net__hton(struct net_packet* packet){
+void net__hton(struct net_packet* packet){
   packet->source = htons(packet->source);
   packet->destination = htons(packet->destination);
   packet->prev_hop = htons(packet->prev_hop);
   packet->seq = htons(packet->seq);
 }
 
-int net__ntoh(struct net_packet* packet){
+void net__ntoh(struct net_packet* packet){
   packet->source = ntohs(packet->source);
   packet->destination = ntohs(packet->destination);
   packet->prev_hop = ntohs(packet->prev_hop);
@@ -62,7 +62,7 @@ int net__dispatch_packet(struct net_packet* packet){
   
   for(i=0;i<num_links;i++){
     if(links[i] != prev_hop && links[i] != source){
-      if(rand() & TOPO_PMASK >= topo_drop_rate(links[i])){
+      if((rand() & TOPO_PMASK) >= topo_drop_rate(links[i])){
 	printf("(%d) OUT:\t(%d)\t(%d)\t%d:%d\t-> %d\n",local_address,links[i],prev_hop,source,seq,destination);
 	udp_send(links[i],packet,size);
       } else {
@@ -70,6 +70,8 @@ int net__dispatch_packet(struct net_packet* packet){
       }
     }
   }
+
+  return 0;
 }
 
 void* net__run(void* params){
@@ -111,6 +113,8 @@ int net_init(){
   seq_init(topo_get_num_nodes());
 
   pthread_create(&net_run_thread,NULL,net__run,NULL);
+
+  return 0;
 }
 
 int net_cleanup(){
@@ -122,6 +126,8 @@ int net_cleanup(){
   free(links);
 
   queue_destroy(net_recv_queue);
+
+  return 0;
 }
 
 int net_send(uint16_t destination, void* data, uint32_t data_size){
