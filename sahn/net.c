@@ -62,7 +62,7 @@ int net__dispatch_packet(struct net_packet* packet){
   
   for(i=0;i<num_links;i++){
     if(links[i] != prev_hop && links[i] != source){
-      if(rand() & TOPO_PMASK >= topo_drop_rate(links[i])){
+      if((rand() & TOPO_PMASK) >= topo_drop_rate(links[i])){
 	printf("(%d) OUT:\t(%d)\t(%d)\t%d:%d\t-> %d\n",local_address,links[i],prev_hop,source,seq,destination);
 	udp_send(links[i],packet,size);
       } else {
