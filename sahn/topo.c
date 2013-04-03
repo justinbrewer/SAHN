@@ -1,3 +1,4 @@
+#include "cache.h"
 #include "topo.h"
 
 #include <stdlib.h>
@@ -11,77 +12,56 @@
 
 char* topo_file;
 
-struct topo_node* topo_nodes;
-unsigned int topo_num_nodes;
-
+struct cache_t* node_cache;
 struct topo_node* topo_local_node;
 
-int topo__node_compare(const void* a, const void* b){
-  return (int)((struct topo_node*)a)->address - (int)((struct topo_node*)b)->address;
-}
-
-struct topo_node* topo__get_node(uint16_t address){
-  struct topo_node key = {.address = address};
-  return bsearch(&key,topo_nodes,topo_num_nodes,sizeof(struct topo_node),topo__node_compare);
-}
-
 int topo_init(const char* file, uint16_t local_address){
-  int i=0;
   char addr_buf[64], port_buf[8], links_buf[64], *link;
   FILE* fp;
+  struct topo_node* node;
 
-  topo_nodes = (struct topo_node*)malloc(MAX_NODES*sizeof(struct topo_node));
-  memset(topo_nodes, 0, MAX_NODES*sizeof(struct topo_node));
-  topo_num_nodes = 0;
+  node_cache = cache_create(free);
+  cache_disable_sort(node_cache);
 
   topo_file = strdup(file);
   fp = fopen(topo_file,"r");
 
   while(!feof(fp)){
+    node = (struct topo_node*)malloc(sizeof(struct topo_node));
+
     fscanf(fp,"Node %hu %64[^,], %8s %hd %hd links %64[^\n]\n",
-	   &topo_nodes[i].address,
+	   &node->address,
 	   addr_buf,
 	   port_buf,
-	   &topo_nodes[i].loc.x,
-	   &topo_nodes[i].loc.y,
+	   &node->loc.x,
+	   &node->loc.y,
 	   links_buf);
 
-    topo_nodes[i].real_address = strdup(addr_buf);
-    topo_nodes[i].real_port = strdup(port_buf);
+    node->real_address = strdup(addr_buf);
+    node->real_port = strdup(port_buf);
     
-    topo_nodes[i].links = (uint16_t*)malloc(MAX_LINKS*sizeof(uint16_t));
+    node->links = (uint16_t*)malloc(MAX_LINKS*sizeof(uint16_t));
     link = strtok(links_buf," ");
     while(link != NULL){
-      topo_nodes[i].links[topo_nodes[i].num_links++] = atoi(link);
+      node->links[node->num_links++] = atoi(link);
       link = strtok(NULL," ");
     }
-    topo_nodes[i].links = (uint16_t*)realloc(topo_nodes[i].links,topo_nodes[i].num_links*sizeof(uint16_t));
+    node->links = (uint16_t*)realloc(node->links,node->num_links*sizeof(uint16_t));
 
-    i++;
+    cache_set(node_cache,node->address,node);
   }
-  topo_num_nodes = i;
   fclose(fp);
 
-  qsort(topo_nodes,topo_num_nodes,sizeof(struct topo_node),topo__node_compare);
+  cache_enable_sort(node_cache);
 
-  topo_local_node = topo__get_node(local_address);
+  topo_local_node = cache_get(node_cache,local_address);
 
   return 0;
 }
 
 int topo_cleanup(){
-  unsigned int i;
-
   free(topo_file);
-
-  for(i=0;i<topo_num_nodes;i++){
-    free(topo_nodes[i].links);
-    free(topo_nodes[i].real_address);
-    free(topo_nodes[i].real_port);
-  }
-
-  free(topo_nodes);
-
+  cache_destroy(node_cache);
   return 0;
 }
 
@@ -90,17 +70,17 @@ struct topo_node* topo_get_local_node(){
 }
 
 struct topo_node* topo_get_node(uint16_t address){
-  return topo_copy_node(topo__get_node(address));
+  return topo_copy_node(cache_get(node_cache,address));
 }
 
 unsigned int topo_get_num_nodes(){
-  return topo_num_nodes;
+  return cache_len(node_cache);
 }
 
 uint32_t topo_drop_rate(uint16_t remote_node){
   int x, y;
   const struct topo_coord* a = &topo_local_node->loc;
-  const struct topo_coord* b = &topo__get_node(remote_node)->loc;
+  const struct topo_coord* b = &((struct topo_node*)cache_get(node_cache,remote_node))->loc;
 
   x = a->x - b->x;
   x *= x;
