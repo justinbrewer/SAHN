@@ -22,11 +22,6 @@ int sahn_cleanup() {
 }
 
 SAHN_EXPORT
-int sahn_update_topology(const char* new_file) {
-
-}
-
-SAHN_EXPORT
 int sahn_send(uint16_t destination, void* data, uint32_t data_size) {
   return net_send(destination,data,data_size);
 }
