@@ -138,3 +138,13 @@ int cache_set(struct cache_t* cache, uint32_t key, void* val){
 
   return 0;
 }
+
+uint32_t cache_len(struct cache_t* cache){
+  uint32_t len;
+
+  pthread_rwlock_rdlock(&cache->lock);
+  len = cache->num;
+  pthread_rwlock_unlock(&cache->lock);
+
+  return len;
+}
