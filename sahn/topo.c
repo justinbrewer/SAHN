@@ -123,7 +123,6 @@ struct topo_node* topo_copy_node(struct topo_node* node){
     return NULL;
   }
 
-  int i;
   struct topo_node* res = topo_alloc_node();
   memcpy(res,node,sizeof(struct topo_node));
 
