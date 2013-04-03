@@ -12,6 +12,8 @@ int sahn_init(const char* topology_file, uint16_t node_address) {
   topo_init(topology_file,node_address);
   udp_init();
   net_init();
+
+  return 0; //TODO: Proper error checking
 }
 
 SAHN_EXPORT
@@ -19,6 +21,8 @@ int sahn_cleanup() {
   net_cleanup();
   udp_cleanup();
   topo_cleanup();
+
+  return 0;
 }
 
 SAHN_EXPORT
