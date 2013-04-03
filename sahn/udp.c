@@ -1,3 +1,4 @@
+#include "cache.h"
 #include "topo.h"
 #include "udp.h"
 
@@ -10,6 +11,7 @@
 #include <sys/socket.h>
 
 int udp_socket;
+struct cache_t* addr_cache;
 
 int udp_init(){
   struct sockaddr_in addr = {0};
@@ -23,29 +25,36 @@ int udp_init(){
   bind(udp_socket,(struct sockaddr*)&addr,sizeof(struct sockaddr_in));
 
   topo_free_node(local_node);
+
+  addr_cache = cache_create((cache_free_t)freeaddrinfo);
   return 0;
 }
 
 int udp_cleanup(){
+  cache_destroy(addr_cache);
   close(udp_socket);
 }
 
 int udp_send(uint16_t destination, void* data, uint32_t data_size){
-  int size_sent;
   struct addrinfo hints = {0}, *addr;
-  struct topo_node* node = topo_get_node(destination);
+  struct topo_node* node;
 
-  hints.ai_family = AF_INET;
-  hints.ai_socktype = SOCK_DGRAM;
+  addr = cache_get(addr_cache,destination);
+
+  if(addr == NULL){
+    node = topo_get_node(destination);
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
   
-  getaddrinfo(node->real_address,node->real_port,&hints,&addr);
+    getaddrinfo(node->real_address,node->real_port,&hints,&addr);
 
-  size_sent = sendto(udp_socket,data,data_size,0,addr->ai_addr,addr->ai_addrlen);
+    cache_set(addr_cache,destination,addr);
 
-  freeaddrinfo(addr);
+    topo_free_node(node);
+  }
 
-  topo_free_node(node);
-  return size_sent;
+  return sendto(udp_socket,data,data_size,0,addr->ai_addr,addr->ai_addrlen);
 }
 
 int udp_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
