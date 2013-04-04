@@ -3,15 +3,42 @@
 #include "topo.h"
 #include "udp.h"
 
-#define SAHN_MAX_PACKET_SIZE 128
+#include <stdbool.h>
+#include <stdlib.h>
 
 #define SAHN_EXPORT __attribute__((visibility("default")))
 
 SAHN_EXPORT
-int sahn_init(const char* topology_file, uint16_t node_address) {
+struct sahn_config_t* sahn_config_create(){
+  struct sahn_config_t* config = (struct sahn_config_t*)malloc(sizeof(struct sahn_config_t));
+
+  config->node_range = 128;
+  config->seq_threshold_low = 16;
+  config->seq_threshold_high = 65520;
+
+  return config;
+}
+
+SAHN_EXPORT
+int sahn_config_destroy(struct sahn_config_t* config){
+  free(config);
+}
+
+SAHN_EXPORT
+int sahn_init(const char* topology_file, uint16_t node_address, struct sahn_config_t* config) {
+  bool free_config = false;
+  if(config == NULL){
+    config = sahn_config_create();
+    free_config = true;
+  }
+
   topo_init(topology_file,node_address);
   udp_init();
   net_init();
+
+  if(free_config){
+    sahn_config_destroy(config);
+  }
 
   return 0; //TODO: Proper error checking
 }
