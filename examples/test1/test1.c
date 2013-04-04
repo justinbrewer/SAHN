@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  sahn_init(argv[1],atoi(argv[2]));
+  sahn_init(argv[1],atoi(argv[2]),NULL);
 
   sahn_cleanup();
   return 0;
