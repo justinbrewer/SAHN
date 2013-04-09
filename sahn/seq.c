@@ -20,10 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-//TODO: Tweak these values
-#define THR_HIGH (65520)
-#define THR_LOW (16)
-
 struct seq_entry {
   uint16_t addr;
   uint16_t seq;
@@ -34,16 +30,22 @@ unsigned int seq_num;
 
 struct seq_entry* seq_table;
 
+uint16_t seq_thr_high;
+uint16_t seq_thr_low;
+
 int seq__compare(const void* a, const void* b){
   return ((const struct seq_entry*)a)->addr - ((const struct seq_entry*)b)->addr;
 }
 
-int seq_init(unsigned int size){
+int seq_init(unsigned int size, struct sahn_config_t* config){
   seq_cap = size;
   seq_num = 0;
 
   seq_table = (struct seq_entry*)malloc(seq_cap*sizeof(struct seq_entry));
   memset(seq_table,0,seq_cap*sizeof(struct seq_entry));
+
+  seq_thr_high = config->seq_threshold_high;
+  seq_thr_low = config->seq_threshold_low;
 
   return 0;
 }
@@ -78,7 +80,7 @@ int seq_check(uint16_t addr, uint16_t seq){
     return 1;
   }
 
-  if(match->seq < seq || (match->seq > THR_HIGH && seq < THR_LOW)){
+  if(match->seq < seq || (match->seq > seq_thr_high && seq < seq_thr_low)){
     match->seq = seq;
     return 1;
   }

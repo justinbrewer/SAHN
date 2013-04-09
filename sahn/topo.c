@@ -25,14 +25,14 @@
 #define MAX_NODES 128
 #define MAX_LINKS 32
 
-#define DROP_RANGE 128
-
 char* topo_file;
 
 struct cache_t* node_cache;
 struct topo_node* topo_local_node;
 
-int topo_init(const char* file, uint16_t local_address){
+unsigned int topo_drop_divisor;
+
+int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config){
   char addr_buf[64], port_buf[8], links_buf[64], *link;
   FILE* fp;
   struct topo_node* node;
@@ -73,6 +73,11 @@ int topo_init(const char* file, uint16_t local_address){
 
   topo_local_node = cache_get(node_cache,local_address);
 
+  topo_drop_divisor = config->node_range;
+  topo_drop_divisor *= topo_drop_divisor;
+  topo_drop_divisor >>= 4;
+  topo_drop_divisor *= topo_drop_divisor;
+
   return 0;
 }
 
@@ -106,7 +111,7 @@ uint32_t topo_drop_rate(uint16_t remote_node){
   x += y; 
   x *= x;
 
-  return x >> 20; //TODO: This makes drop range unadjustable (must be 128)
+  return x / topo_drop_divisor;
 }
 
 struct topo_node* topo_alloc_node(){

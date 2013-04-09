@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "sahn.h"
+
 #include <stdint.h>
 
 #define TOPO_PRANGE 256
@@ -39,7 +41,7 @@ struct topo_node {
   char* real_port;
 };
 
-int topo_init(const char* file, uint16_t local_address);
+int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config);
 int topo_cleanup();
 
 struct topo_node* topo_get_local_node();

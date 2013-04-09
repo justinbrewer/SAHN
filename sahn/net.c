@@ -114,7 +114,7 @@ void* net__run(void* params){
   }
 }
 
-int net_init(){
+int net_init(struct sahn_config_t* config){
   net_recv_queue = queue_create();
 
   struct topo_node* node = topo_get_local_node();
@@ -127,7 +127,7 @@ int net_init(){
 
   topo_free_node(node);
 
-  seq_init(topo_get_num_nodes());
+  seq_init(topo_get_num_nodes(),config);
 
   pthread_create(&net_run_thread,NULL,net__run,NULL);
 

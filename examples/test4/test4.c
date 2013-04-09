@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   char* message = "Hello, world!";
   char buffer[64];
 
-  sahn_init("examples/test4/nodes",address);
+  sahn_init("examples/test4/nodes",address,NULL);
 
   switch(address){
   case 19:
