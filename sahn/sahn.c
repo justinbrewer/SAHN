@@ -32,9 +32,9 @@ int sahn_init(const char* topology_file, uint16_t node_address, struct sahn_conf
     free_config = true;
   }
 
-  topo_init(topology_file,node_address);
-  udp_init();
-  net_init();
+  topo_init(topology_file,node_address,config);
+  udp_init(config);
+  net_init(config);
 
   if(free_config){
     sahn_config_destroy(config);

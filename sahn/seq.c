@@ -21,7 +21,7 @@ int seq__compare(const void* a, const void* b){
   return ((const struct seq_entry*)a)->addr - ((const struct seq_entry*)b)->addr;
 }
 
-int seq_init(unsigned int size){
+int seq_init(unsigned int size, struct sahn_config_t* config){
   seq_cap = size;
   seq_num = 0;
 

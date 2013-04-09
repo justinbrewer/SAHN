@@ -15,7 +15,7 @@ char* topo_file;
 struct cache_t* node_cache;
 struct topo_node* topo_local_node;
 
-int topo_init(const char* file, uint16_t local_address){
+int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config){
   char addr_buf[64], port_buf[8], links_buf[64], *link;
   FILE* fp;
   struct topo_node* node;

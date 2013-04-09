@@ -14,7 +14,7 @@
 int udp_socket;
 struct cache_t* addr_cache;
 
-int udp_init(){
+int udp_init(struct sahn_config_t* config){
   struct sockaddr_in addr = {0};
   struct topo_node* local_node = topo_get_local_node();
 
