@@ -17,11 +17,18 @@
 
 #pragma once
 
-#include "sahn.h"
-
+#include <string.h>
 #include <stdint.h>
 
-int seq_init(unsigned int size, struct sahn_config_t* config);
-int seq_cleanup();
+struct cache_t;
+typedef void (*cache_free_t)(void*);
 
-int seq_check(uint16_t addr, uint16_t seq);
+struct cache_t* cache_create(cache_free_t free_callback);
+int cache_destroy(struct cache_t* cache);
+
+int cache_enable_sort(struct cache_t* cache);
+int cache_disable_sort(struct cache_t* cache);
+
+void* cache_get(struct cache_t* cache, uint32_t key);
+int cache_set(struct cache_t* cache, uint32_t key, void* val);
+uint32_t cache_len(struct cache_t* cache);

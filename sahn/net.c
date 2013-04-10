@@ -1,3 +1,20 @@
+/* This file is part of libsahn
+ * Copyright (c) 2013 Justin Brewer
+ *
+ * libsahn is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this software. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "net.h"
 #include "queue.h"
 #include "seq.h"
@@ -7,6 +24,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <arpa/inet.h>
 
 #define MAX_PAYLOAD 116
@@ -23,11 +41,6 @@ struct net_packet {
   uint8_t payload[MAX_PAYLOAD];
 } __attribute__((__packed__));
 
-struct net_seq_entry {
-  uint16_t addr;
-  uint16_t seq;
-};
-
 uint16_t local_address;
 uint16_t num_links;
 uint16_t* links;
@@ -36,14 +49,14 @@ struct queue_t* net_recv_queue;
 
 pthread_t net_run_thread;
 
-int net__hton(struct net_packet* packet){
+void net__hton(struct net_packet* packet){
   packet->source = htons(packet->source);
   packet->destination = htons(packet->destination);
   packet->prev_hop = htons(packet->prev_hop);
   packet->seq = htons(packet->seq);
 }
 
-int net__ntoh(struct net_packet* packet){
+void net__ntoh(struct net_packet* packet){
   packet->source = ntohs(packet->source);
   packet->destination = ntohs(packet->destination);
   packet->prev_hop = ntohs(packet->prev_hop);
@@ -58,7 +71,7 @@ struct net_packet* net__copy_packet(struct net_packet* in){
 
 int net__dispatch_packet(struct net_packet* packet){
   int i;
-  uint16_t prev_hop = packet->prev_hop, source = packet->source;
+  uint16_t prev_hop = packet->prev_hop, source = packet->source, destination = packet->destination, seq = packet->seq;
   uint8_t size = packet->size;
   packet->prev_hop = local_address;
 
@@ -66,9 +79,16 @@ int net__dispatch_packet(struct net_packet* packet){
   
   for(i=0;i<num_links;i++){
     if(links[i] != prev_hop && links[i] != source){
-      udp_send(links[i],packet,size);
+      if((rand() & TOPO_PMASK) >= topo_drop_rate(links[i])){
+	printf("(%d) OUT:\t(%d)\t(%d)\t%d:%d\t-> %d\n",local_address,links[i],prev_hop,source,seq,destination);
+	udp_send(links[i],packet,size);
+      } else {
+	printf("(%d) DROP:\t(%d)\t(%d)\t%d:%d\t-> %d\n",local_address,links[i],prev_hop,source,seq,destination);
+      }
     }
   }
+
+  return 0;
 }
 
 void* net__run(void* params){
@@ -79,8 +99,11 @@ void* net__run(void* params){
     net__ntoh(&packet);
 
     if(!seq_check(packet.source,packet.seq)){
+      printf("(%d) OLD:\t\t(%d)\t%d:%d\t-> %d\n",local_address,packet.prev_hop,packet.source,packet.seq,packet.destination);
       continue;
     }
+
+    printf("(%d) IN: \t\t(%d)\t%d:%d\t-> %d\n",local_address,packet.prev_hop,packet.source,packet.seq,packet.destination);
 
     if(packet.destination == local_address){
       queue_push(net_recv_queue,net__copy_packet(&packet));
@@ -91,7 +114,7 @@ void* net__run(void* params){
   }
 }
 
-int net_init(){
+int net_init(struct sahn_config_t* config){
   net_recv_queue = queue_create();
 
   struct topo_node* node = topo_get_local_node();
@@ -104,9 +127,11 @@ int net_init(){
 
   topo_free_node(node);
 
-  seq_init(topo_get_num_nodes());
+  seq_init(topo_get_num_nodes(),config);
 
   pthread_create(&net_run_thread,NULL,net__run,NULL);
+
+  return 0;
 }
 
 int net_cleanup(){
@@ -118,6 +143,8 @@ int net_cleanup(){
   free(links);
 
   queue_destroy(net_recv_queue);
+
+  return 0;
 }
 
 int net_send(uint16_t destination, void* data, uint32_t data_size){

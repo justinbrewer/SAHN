@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   char* message = "Hello, world!";
   char buffer[64];
 
-  sahn_init("examples/test2/nodes",address);
+  sahn_init("examples/test2/nodes",address,NULL);
 
   if(address == 42){
     sahn_send(19,message,strlen(message));

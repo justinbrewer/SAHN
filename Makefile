@@ -1,4 +1,4 @@
-VERSION = 0.2.1
+VERSION = 0.3
 
 CC = gcc
 CFLAGS = -c -fpic -fvisibility=hidden -Isahn -pthread
@@ -11,7 +11,8 @@ OBJDIR = obj
 DISTDIR = libsahn-$(VERSION)
 BINDIR = bin
 
-OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o $(OBJDIR)/seq.o $(OBJDIR)/queue.o
+OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o \
+      $(OBJDIR)/seq.o $(OBJDIR)/queue.o $(OBJDIR)/cache.o
 
 all: debug
 
@@ -58,7 +59,7 @@ $(OBJDIR)/sahn.o: sahn/sahn.h sahn/sahn.c sahn/topo.h sahn/udp.h
 $(OBJDIR)/topo.o: sahn/topo.h sahn/topo.c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/topo.o sahn/topo.c
 
-$(OBJDIR)/udp.o: sahn/udp.h sahn/udp.c sahn/topo.h
+$(OBJDIR)/udp.o: sahn/udp.h sahn/udp.c sahn/topo.h sahn/cache.h
 	$(CC) $(CFLAGS) -o $(OBJDIR)/udp.o sahn/udp.c
 
 $(OBJDIR)/net.o: sahn/net.h sahn/net.c sahn/topo.h sahn/udp.h sahn/seq.h sahn/queue.h
@@ -70,18 +71,25 @@ $(OBJDIR)/seq.o: sahn/seq.h sahn/seq.c
 $(OBJDIR)/queue.o: sahn/queue.h sahn/queue.c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/queue.o sahn/queue.c
 
+$(OBJDIR)/cache.o: sahn/cache.h sahn/cache.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/cache.o sahn/cache.c
+
 #====================
 EC = $(CC)
 EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -Isahn -g -O0
 
+test1: debug $(BINDIR)/test1
 $(BINDIR)/test1: examples/test1/test1.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test1 examples/test1/test1.c
 
+test2: debug $(BINDIR)/test2
 $(BINDIR)/test2: examples/test2/test2.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test2 examples/test2/test2.c
 
+test3: debug $(BINDIR)/test3
 $(BINDIR)/test3: examples/test3/test3.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test3 examples/test3/test3.c
 
+test4: debug $(BINDIR)/test4
 $(BINDIR)/test4: examples/test4/test4.c
 	$(EC) $(EFLAGS) -o $(BINDIR)/test4 examples/test4/test4.c

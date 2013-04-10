@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 
 int main(int argc, char** argv) {
   if(argc != 2) {
@@ -15,7 +16,7 @@ int main(int argc, char** argv) {
   char* message = "Hello, world!";
   char buffer[64];
 
-  sahn_init("examples/test4/nodes",address);
+  sahn_init("examples/test4/nodes",address,NULL);
 
   switch(address){
   case 19:
@@ -26,7 +27,10 @@ int main(int argc, char** argv) {
     break;
 
   case 42:
-    sahn_send(19,message,strlen(message)+1);
+    while(1){
+      sahn_send(19,message,strlen(message)+1);
+      sleep(1);
+    }
     break;
 
   default:
