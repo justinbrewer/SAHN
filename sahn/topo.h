@@ -37,8 +37,8 @@ struct topo_node {
   uint16_t num_links;
   uint16_t* links;
 
-  char* real_address;
-  char* real_port;
+  char real_address[64];
+  char real_port[8];
 };
 
 int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config);
