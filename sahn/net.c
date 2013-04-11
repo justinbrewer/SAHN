@@ -16,10 +16,10 @@
  */
 
 #include "net.h"
-#include "queue.h"
 #include "seq.h"
 #include "topo.h"
 #include "udp.h"
+#include "util/queue.h"
 
 #include <pthread.h>
 #include <string.h>

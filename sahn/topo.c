@@ -15,8 +15,8 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cache.h"
 #include "topo.h"
+#include "util/cache.h"
 
 #include <stdlib.h>
 #include <stdio.h>
