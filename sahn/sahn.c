@@ -18,7 +18,6 @@
 #include "net.h"
 #include "sahn.h"
 #include "topo.h"
-#include "udp.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -64,7 +63,6 @@ int sahn_init(const char* topology_file, uint16_t node_address, struct sahn_conf
   }
 
   topo_init(topology_file,node_address,config);
-  udp_init(config);
   net_init(config);
 
   if(free_config){
@@ -81,7 +79,6 @@ int sahn_init(const char* topology_file, uint16_t node_address, struct sahn_conf
 SAHN_EXPORT
 int sahn_cleanup() {
   net_cleanup();
-  udp_cleanup();
   topo_cleanup();
 
   return 0;

@@ -115,6 +115,8 @@ void* net__run(void* params){
 }
 
 int net_init(struct sahn_config_t* config){
+  udp_init(config);
+
   net_recv_queue = queue_create();
 
   struct topo_node* node = topo_get_local_node();
@@ -143,6 +145,8 @@ int net_cleanup(){
   free(links);
 
   queue_destroy(net_recv_queue);
+
+  udp_cleanup();
 
   return 0;
 }
