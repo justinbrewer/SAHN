@@ -12,7 +12,7 @@ DISTDIR = libsahn-$(VERSION)
 BINDIR = bin
 
 OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o \
-      $(OBJDIR)/seq.o $(OBJDIR)/util-queue.o $(OBJDIR)/util-cache.o
+      $(OBJDIR)/seq.o $(OBJDIR)/util/queue.o $(OBJDIR)/util/cache.o
 
 all: debug
 
@@ -28,6 +28,9 @@ clean:
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
+$(OBJDIR)/util:
+	@mkdir -p $(OBJDIR)/util
+
 $(DISTDIR):
 	@mkdir -p $(DISTDIR)
 
@@ -42,13 +45,13 @@ $(DISTDIR).tar.gz: $(DISTDIR) $(DISTDIR)/sahn.h $(DISTDIR)/libsahn.so
 $(DISTDIR)/sahn.h: sahn/sahn.h
 	@cp sahn/sahn.h $(DISTDIR)
 
-$(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJ)
+$(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJDIR)/util $(OBJ)
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
 	@strip --strip-unneeded $(DISTDIR)/libsahn.so
 
 #====================
 
-$(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJ)
+$(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJDIR)/util $(OBJ)
 	$(LL) $(LFLAGS) -o $(BINDIR)/libsahn_d.so $(OBJ)
 
 #====================
@@ -68,11 +71,11 @@ $(OBJDIR)/net.o: src/net.h src/net.c src/topo.h src/udp.h src/seq.h src/util/que
 $(OBJDIR)/seq.o: src/seq.h src/seq.c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/seq.o src/seq.c
 
-$(OBJDIR)/util-queue.o: src/util/queue.h src/util/queue.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/util-queue.o src/util/queue.c
+$(OBJDIR)/util/queue.o: src/util/queue.h src/util/queue.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/util/queue.o src/util/queue.c
 
-$(OBJDIR)/util-cache.o: src/util/cache.h src/util/cache.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/util-cache.o src/util/cache.c
+$(OBJDIR)/util/cache.o: src/util/cache.h src/util/cache.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/util/cache.o src/util/cache.c
 
 #====================
 EC = $(CC)
