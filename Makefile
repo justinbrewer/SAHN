@@ -53,26 +53,26 @@ $(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJ)
 
 #====================
 
-$(OBJDIR)/sahn.o: sahn/sahn.h sahn/sahn.c sahn/topo.h sahn/udp.h
-	$(CC) $(CFLAGS) -o $(OBJDIR)/sahn.o sahn/sahn.c
+$(OBJDIR)/sahn.o: src/sahn.h src/sahn.c src/topo.h src/udp.h
+	$(CC) $(CFLAGS) -o $(OBJDIR)/sahn.o src/sahn.c
 
-$(OBJDIR)/topo.o: sahn/topo.h sahn/topo.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/topo.o sahn/topo.c
+$(OBJDIR)/topo.o: src/topo.h src/topo.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/topo.o src/topo.c
 
-$(OBJDIR)/udp.o: sahn/udp.h sahn/udp.c sahn/topo.h sahn/util/cache.h
-	$(CC) $(CFLAGS) -o $(OBJDIR)/udp.o sahn/udp.c
+$(OBJDIR)/udp.o: src/udp.h src/udp.c src/topo.h src/util/cache.h
+	$(CC) $(CFLAGS) -o $(OBJDIR)/udp.o src/udp.c
 
-$(OBJDIR)/net.o: sahn/net.h sahn/net.c sahn/topo.h sahn/udp.h sahn/seq.h sahn/util/queue.h
-	$(CC) $(CFLAGS) -o $(OBJDIR)/net.o sahn/net.c
+$(OBJDIR)/net.o: src/net.h src/net.c src/topo.h src/udp.h src/seq.h src/util/queue.h
+	$(CC) $(CFLAGS) -o $(OBJDIR)/net.o src/net.c
 
-$(OBJDIR)/seq.o: sahn/seq.h sahn/seq.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/seq.o sahn/seq.c
+$(OBJDIR)/seq.o: src/seq.h src/seq.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/seq.o src/seq.c
 
-$(OBJDIR)/util-queue.o: sahn/util/queue.h sahn/util/queue.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/util-queue.o sahn/util/queue.c
+$(OBJDIR)/util-queue.o: src/util/queue.h src/util/queue.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/util-queue.o src/util/queue.c
 
-$(OBJDIR)/util-cache.o: sahn/util/cache.h sahn/util/cache.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/util-cache.o sahn/util/cache.c
+$(OBJDIR)/util-cache.o: src/util/cache.h src/util/cache.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/util-cache.o src/util/cache.c
 
 #====================
 EC = $(CC)
