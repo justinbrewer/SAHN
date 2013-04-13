@@ -21,6 +21,19 @@
 
 #include <stdint.h>
 
+#define NET_MAX_PAYLOAD 116
+#define NET_HEADER_SIZE 12
+
+struct net_packet_t {
+  uint16_t source;
+  uint16_t destination;
+  uint16_t prev_hop;
+  uint16_t seq;
+  uint8_t size;
+  uint8_t __header_padding[3];
+  uint8_t payload[NET_MAX_PAYLOAD];
+} __attribute__((__packed__));
+
 int net_init(struct sahn_config_t* config);
 int net_cleanup();
 

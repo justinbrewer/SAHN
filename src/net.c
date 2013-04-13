@@ -27,19 +27,7 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 
-#define MAX_PAYLOAD 116
 #define BUFFER_LEN 128
-#define HEADER_SIZE 12
-
-struct net_packet {
-  uint16_t source;
-  uint16_t destination;
-  uint16_t prev_hop;
-  uint16_t seq;
-  uint8_t size;
-  uint8_t __header_padding[3];
-  uint8_t payload[MAX_PAYLOAD];
-} __attribute__((__packed__));
 
 uint16_t local_address;
 uint16_t num_links;
@@ -49,27 +37,27 @@ struct queue_t* net_recv_queue;
 
 pthread_t net_run_thread;
 
-void net__hton(struct net_packet* packet){
+void net__hton(struct net_packet_t* packet){
   packet->source = htons(packet->source);
   packet->destination = htons(packet->destination);
   packet->prev_hop = htons(packet->prev_hop);
   packet->seq = htons(packet->seq);
 }
 
-void net__ntoh(struct net_packet* packet){
+void net__ntoh(struct net_packet_t* packet){
   packet->source = ntohs(packet->source);
   packet->destination = ntohs(packet->destination);
   packet->prev_hop = ntohs(packet->prev_hop);
   packet->seq = ntohs(packet->seq);
 }
 
-struct net_packet* net__copy_packet(struct net_packet* in){
-  struct net_packet* out = (struct net_packet*)malloc(sizeof(struct net_packet));
-  memcpy(out,in,sizeof(struct net_packet));
+struct net_packet_t* net__copy_packet(struct net_packet_t* in){
+  struct net_packet_t* out = (struct net_packet_t*)malloc(sizeof(struct net_packet_t));
+  memcpy(out,in,sizeof(struct net_packet_t));
   return out;
 }
 
-int net__dispatch_packet(struct net_packet* packet){
+int net__dispatch_packet(struct net_packet_t* packet){
   int i;
   uint16_t prev_hop = packet->prev_hop, source = packet->source, destination = packet->destination, seq = packet->seq;
   uint8_t size = packet->size;
@@ -92,10 +80,10 @@ int net__dispatch_packet(struct net_packet* packet){
 }
 
 void* net__run(void* params){
-  struct net_packet packet = {0};
+  struct net_packet_t packet = {0};
 
   while(1){
-    udp_recv(NULL,&packet,sizeof(struct net_packet));
+    udp_recv(NULL,&packet,sizeof(struct net_packet_t));
     net__ntoh(&packet);
 
     if(!seq_check(packet.source,packet.seq)){
@@ -153,18 +141,18 @@ int net_cleanup(){
 
 int net_send(uint16_t destination, void* data, uint32_t data_size){
   static uint16_t seq = 0;
-  struct net_packet packet = {0};
+  struct net_packet_t packet = {0};
 
   packet.source = local_address;
   packet.destination = destination;
   packet.seq = seq++;
 
-  if(data_size > MAX_PAYLOAD){
+  if(data_size > NET_MAX_PAYLOAD){
     //TODO: What to do with it? For now we'll just drop :P
     return -1;
   }
 
-  packet.size = data_size + HEADER_SIZE;
+  packet.size = data_size + NET_HEADER_SIZE;
   memcpy(&packet.payload,data,data_size);
 
   net__dispatch_packet(&packet);
@@ -173,7 +161,7 @@ int net_send(uint16_t destination, void* data, uint32_t data_size){
 
 int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   int size;
-  struct net_packet* packet;
+  struct net_packet_t* packet;
 
   packet = queue_pop(net_recv_queue);
 
@@ -182,7 +170,7 @@ int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size){
   }
 
   //TODO: What should we do if the buffer is smaller than the packet?
-  size = packet->size - HEADER_SIZE;
+  size = packet->size - NET_HEADER_SIZE;
 
   memcpy(buffer,packet->payload,size);
 
