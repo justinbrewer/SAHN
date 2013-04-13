@@ -27,8 +27,6 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 
-#define BUFFER_LEN 128
-
 uint16_t local_address;
 uint16_t num_links;
 uint16_t* links;
