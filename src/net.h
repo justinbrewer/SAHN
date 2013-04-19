@@ -39,3 +39,6 @@ int net_cleanup();
 
 int net_send(uint16_t destination, void* data, uint32_t data_size);
 int net_recv(uint16_t* source, void* buffer, uint32_t buffer_size);
+
+void net_hton(struct net_packet_t* packet);
+void net_ntoh(struct net_packet_t* packet);

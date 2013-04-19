@@ -35,14 +35,14 @@ struct queue_t* net_recv_queue;
 
 pthread_t net_run_thread;
 
-void net__hton(struct net_packet_t* packet){
+void net_hton(struct net_packet_t* packet){
   packet->source = htons(packet->source);
   packet->destination = htons(packet->destination);
   packet->prev_hop = htons(packet->prev_hop);
   packet->seq = htons(packet->seq);
 }
 
-void net__ntoh(struct net_packet_t* packet){
+void net_ntoh(struct net_packet_t* packet){
   packet->source = ntohs(packet->source);
   packet->destination = ntohs(packet->destination);
   packet->prev_hop = ntohs(packet->prev_hop);
@@ -61,7 +61,7 @@ int net__dispatch_packet(struct net_packet_t* packet){
   uint8_t size = packet->size;
   packet->prev_hop = local_address;
 
-  net__hton(packet);
+  net_hton(packet);
   
   for(i=0;i<num_links;i++){
     if(links[i] != prev_hop && links[i] != source){
@@ -82,7 +82,7 @@ void* net__run(void* params){
 
   while(1){
     udp_recv(NULL,&packet,sizeof(struct net_packet_t));
-    net__ntoh(&packet);
+    net_ntoh(&packet);
 
     if(!seq_check(packet.source,packet.seq)){
       printf("(%d) OLD:\t\t(%d)\t%d:%d\t-> %d\n",local_address,packet.prev_hop,packet.source,packet.seq,packet.destination);
