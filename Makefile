@@ -42,8 +42,8 @@ $(BINDIR):
 $(DISTDIR).tar.gz: $(DISTDIR) $(DISTDIR)/sahn.h $(DISTDIR)/libsahn.so
 	@tar czf $(DISTDIR).tar.gz $(DISTDIR)
 
-$(DISTDIR)/sahn.h: sahn/sahn.h
-	@cp sahn/sahn.h $(DISTDIR)
+$(DISTDIR)/sahn.h: src/sahn.h
+	@cp src/sahn.h $(DISTDIR)
 
 $(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJDIR)/util $(OBJ)
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
