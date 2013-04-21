@@ -1,4 +1,5 @@
 VERSION = $(shell git rev-parse --short HEAD)
+ROUTE ?= flood
 
 CC = gcc
 CFLAGS = -c -fpic -fvisibility=hidden -Isahn -pthread
@@ -12,7 +13,8 @@ DISTDIR = libsahn-$(VERSION)
 BINDIR = bin
 
 OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o \
-      $(OBJDIR)/seq.o $(OBJDIR)/util/queue.o $(OBJDIR)/util/cache.o
+      $(OBJDIR)/seq.o $(OBJDIR)/util/queue.o $(OBJDIR)/util/cache.o \
+      $(OBJDIR)/route/$(ROUTE).o
 
 all: debug
 
@@ -31,6 +33,9 @@ $(OBJDIR):
 $(OBJDIR)/util:
 	@mkdir -p $(OBJDIR)/util
 
+$(OBJDIR)/route:
+	@mkdir -p $(OBJDIR)/route
+
 $(DISTDIR):
 	@mkdir -p $(DISTDIR)
 
@@ -45,13 +50,13 @@ $(DISTDIR).tar.gz: $(DISTDIR) $(DISTDIR)/sahn.h $(DISTDIR)/libsahn.so
 $(DISTDIR)/sahn.h: sahn/sahn.h
 	@cp sahn/sahn.h $(DISTDIR)
 
-$(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJDIR)/util $(OBJ)
+$(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJDIR)/util $(OBJDIR)/route $(OBJ)
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
 	@strip --strip-unneeded $(DISTDIR)/libsahn.so
 
 #====================
 
-$(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJDIR)/util $(OBJ)
+$(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJDIR)/util $(OBJDIR)/route $(OBJ)
 	$(LL) $(LFLAGS) -o $(BINDIR)/libsahn_d.so $(OBJ)
 
 #====================
@@ -76,6 +81,9 @@ $(OBJDIR)/util/queue.o: src/util/queue.h src/util/queue.c
 
 $(OBJDIR)/util/cache.o: src/util/cache.h src/util/cache.c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/util/cache.o src/util/cache.c
+
+$(OBJDIR)/route/$(ROUTE).o: src/route.h src/route/$(ROUTE).c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/route/$(ROUTE).o src/route/$(ROUTE).c
 
 #====================
 EC = $(CC)
