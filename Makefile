@@ -1,7 +1,7 @@
 VERSION = $(shell git rev-parse --short HEAD)
 
 CC = gcc
-CFLAGS = -c -fpic -fvisibility=hidden -Isahn -pthread
+CFLAGS = -c -fpic -fvisibility=hidden -Isrc -pthread
 debug : CFLAGS += -g -O0
 
 LL = gcc
@@ -79,7 +79,7 @@ $(OBJDIR)/util/cache.o: src/util/cache.h src/util/cache.c
 
 #====================
 EC = $(CC)
-EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -Isahn -g -O0
+EFLAGS = -Wl,-rpath,$(BINDIR) -L$(BINDIR) -lsahn_d -Isrc -g -O0
 
 test1: debug $(BINDIR)/test1
 $(BINDIR)/test1: examples/test1/test1.c
