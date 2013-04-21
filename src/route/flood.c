@@ -1,6 +1,9 @@
 #include "net.h"
 #include "route.h"
+#include "topo.h"
 #include "udp.h"
+
+#include <stdlib.h>
 
 uint16_t local_address;
 uint16_t num_links;
