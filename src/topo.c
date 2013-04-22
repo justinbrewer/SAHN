@@ -43,12 +43,9 @@ int topo__update_nodes(){
   char links_buf[64], *link;
   FILE* fp;
   struct topo_node* node;
-  
-  if(node_cache != NULL){
-    cache_destroy(node_cache);
-  }
-  
-  node_cache = cache_create(free);
+
+  cache_lock(node_cache);
+  cache_flush(node_cache);
   cache_disable_sort(node_cache);
   
   fp = fopen(topo_file,"r");
@@ -77,6 +74,7 @@ int topo__update_nodes(){
   fclose(fp);
 
   cache_enable_sort(node_cache);
+  cache_unlock(node_cache);
 
   topo_local_node = cache_get(node_cache,topo_local_address);
 
@@ -105,6 +103,7 @@ int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* co
 
   topo_local_address = local_address;
 
+  node_cache = cache_create(free);
   topo__update_nodes();
 
   topo_drop_divisor = config->node_range;

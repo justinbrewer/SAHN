@@ -165,3 +165,31 @@ uint32_t cache_len(struct cache_t* cache){
 
   return len;
 }
+
+int cache_lock(struct cache_t* cache){
+  pthread_rwlock_wrlock(&cache->lock);
+  return 0;
+}
+
+int cache_unlock(struct cache_t* cache){
+  pthread_rwlock_unlock(&cache->lock);
+  return 0;
+}
+
+int cache_flush(struct cache_t* cache){
+  int i;
+
+  if(cache->free_callback != NULL){
+     for(i=0;i<cache->num;i++){
+       cache->free_callback(cache->entries[i].val);
+     }
+  }
+
+  memset(cache->entries,0,cache->cap*sizeof(struct cache_entry_t));
+
+  cache->num = 0;
+  cache->cap = 16;
+  cache->entries = 0;
+
+  return 0;
+}
