@@ -92,6 +92,76 @@ int cache_destroy(struct cache_t* cache){
 }
 
 int cache_enable_sort(struct cache_t* cache){
+  int ret;
+
+  pthread_rwlock_wrlock(&cache->lock);
+
+  ret = cache_enable_sort__crit(cache);
+
+  pthread_rwlock_unlock(&cache->lock);
+
+  return ret;
+}
+
+int cache_disable_sort(struct cache_t* cache){
+  int ret;
+
+  pthread_rwlock_wrlock(&cache->lock);
+
+  ret = cache_disable_sort__crit(cache);
+
+  pthread_rwlock_unlock(&cache->lock);
+
+  return ret;
+}
+
+void* cache_get(struct cache_t* cache, uint32_t key){
+  void* val = NULL;
+
+  pthread_rwlock_rdlock(&cache->lock);
+
+  val = cache_get__crit(cache,key);
+
+  pthread_rwlock_unlock(&cache->lock);
+
+  return val;
+}
+
+int cache_set(struct cache_t* cache, uint32_t key, void* val){
+  int ret;
+
+  pthread_rwlock_wrlock(&cache->lock);
+
+  ret = cache_set__crit(cache,key,val);
+
+  pthread_rwlock_unlock(&cache->lock);
+
+  return ret;
+}
+
+uint32_t cache_len(struct cache_t* cache){
+  uint32_t len;
+
+  pthread_rwlock_rdlock(&cache->lock);
+
+  len = cache_len__crit(cache);
+
+  pthread_rwlock_unlock(&cache->lock);
+
+  return len;
+}
+
+int cache_lock(struct cache_t* cache){
+  pthread_rwlock_wrlock(&cache->lock);
+  return 0;
+}
+
+int cache_unlock(struct cache_t* cache){
+  pthread_rwlock_unlock(&cache->lock);
+  return 0;
+}
+
+int cache_enable_sort__crit(struct cache_t* cache){
   if(!cache->sort){
     cache->sort = true;
     qsort(cache->entries,cache->num,sizeof(struct cache_entry_t),cache__compare);
@@ -100,16 +170,34 @@ int cache_enable_sort(struct cache_t* cache){
   return 0;
 }
 
-int cache_disable_sort(struct cache_t* cache){
+int cache_disable_sort__crit(struct cache_t* cache){
   cache->sort = false;
   return 0;
 }
 
-void* cache_get(struct cache_t* cache, uint32_t key){
+int cache_flush__crit(struct cache_t* cache){
+  int i;
+
+  if(cache->free_callback != NULL){
+     for(i=0;i<cache->num;i++){
+       cache->free_callback(cache->entries[i].val);
+     }
+  }
+
+  free(cache->entries);
+
+  cache->entries = (struct cache_entry_t*)malloc(cache->cap*sizeof(struct cache_entry_t));
+  memset(cache->entries,0,cache->cap*sizeof(struct cache_entry_t));
+
+  cache->num = 0;
+  cache->cap = 16;
+
+  return 0;
+}
+
+void* cache_get__crit(struct cache_t* cache, uint32_t key){
   void* val = NULL;
   struct cache_entry_t* entry;
-
-  pthread_rwlock_rdlock(&cache->lock);
 
   entry = cache__find(cache,key);
 
@@ -117,15 +205,11 @@ void* cache_get(struct cache_t* cache, uint32_t key){
     val = entry->val;
   }
 
-  pthread_rwlock_unlock(&cache->lock);
-
   return val;
 }
 
-int cache_set(struct cache_t* cache, uint32_t key, void* val){
+int cache_set__crit(struct cache_t* cache, uint32_t key, void* val){
   struct cache_entry_t* entry;
-
-  pthread_rwlock_wrlock(&cache->lock);
 
   entry = cache__find(cache,key);
 
@@ -151,17 +235,9 @@ int cache_set(struct cache_t* cache, uint32_t key, void* val){
     entry->val = val;
   }
 
-  pthread_rwlock_unlock(&cache->lock);
-
   return 0;
 }
 
-uint32_t cache_len(struct cache_t* cache){
-  uint32_t len;
-
-  pthread_rwlock_rdlock(&cache->lock);
-  len = cache->num;
-  pthread_rwlock_unlock(&cache->lock);
-
-  return len;
+uint32_t cache_len__crit(struct cache_t* cache){
+  return cache->num;
 }
