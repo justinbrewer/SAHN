@@ -46,6 +46,21 @@ int route_cleanup(){
   return 0;
 }
 
+int route_update_links(){
+  struct topo_node* node = topo_get_local_node();
+
+  free(links);
+
+  num_links = node->num_links;
+
+  links = node->links;
+  node->links = NULL;
+
+  topo_free_node(node);
+
+  return 0;
+}
+
 int route_dispatch_packet(struct net_packet_t* packet){
   int i;
   uint16_t prev_hop = packet->prev_hop, source = packet->source;
