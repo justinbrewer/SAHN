@@ -22,8 +22,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MAX_NODES 128
-#define MAX_LINKS 32
 
 char* topo_file;
 
