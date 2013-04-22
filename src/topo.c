@@ -30,7 +30,7 @@
 
 char* topo_file;
 
-struct cache_t* node_cache = NULL;
+struct cache_t* node_cache;
 struct topo_node* topo_local_node;
 uint16_t topo_local_address;
 
@@ -45,8 +45,8 @@ int topo__update_nodes(){
   struct topo_node* node;
 
   cache_lock(node_cache);
-  cache_flush(node_cache);
-  cache_disable_sort(node_cache);
+  cache_flush__crit(node_cache);
+  cache_disable_sort__crit(node_cache);
   
   fp = fopen(topo_file,"r");
   
@@ -69,11 +69,11 @@ int topo__update_nodes(){
     }
     node->links = (uint16_t*)realloc(node->links,node->num_links*sizeof(uint16_t));
 
-    cache_set(node_cache,node->address,node);
+    cache_set__crit(node_cache,node->address,node);
   }
   fclose(fp);
 
-  cache_enable_sort(node_cache);
+  cache_enable_sort__crit(node_cache);
   cache_unlock(node_cache);
 
   topo_local_node = cache_get(node_cache,topo_local_address);
