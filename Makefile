@@ -1,5 +1,5 @@
 VERSION = $(shell git rev-parse --short HEAD)
-ROUTE ?= flood
+ROUTE ?= olsr
 
 CC = gcc
 CFLAGS = -c -fpic -fvisibility=hidden -Isrc -pthread
