@@ -28,13 +28,7 @@ clean:
 #====================
 
 $(OBJDIR):
-	@mkdir -p $(OBJDIR)
-
-$(OBJDIR)/util:
-	@mkdir -p $(OBJDIR)/util
-
-$(OBJDIR)/route:
-	@mkdir -p $(OBJDIR)/route
+	@mkdir -p $(OBJDIR)/{,util,route}
 
 $(DISTDIR):
 	@mkdir -p $(DISTDIR)
@@ -50,13 +44,13 @@ $(DISTDIR).tar.gz: $(DISTDIR) $(DISTDIR)/sahn.h $(DISTDIR)/libsahn.so
 $(DISTDIR)/sahn.h: src/sahn.h
 	@cp src/sahn.h $(DISTDIR)
 
-$(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJDIR)/util $(OBJDIR)/route $(OBJ)
+$(DISTDIR)/libsahn.so: $(OBJDIR) $(OBJ)
 	$(LL) $(LFLAGS) -o $(DISTDIR)/libsahn.so $(OBJ)
 	@strip --strip-unneeded $(DISTDIR)/libsahn.so
 
 #====================
 
-$(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJDIR)/util $(OBJDIR)/route $(OBJ)
+$(BINDIR)/libsahn_d.so: $(OBJDIR) $(OBJ)
 	$(LL) $(LFLAGS) -o $(BINDIR)/libsahn_d.so $(OBJ)
 
 #====================
