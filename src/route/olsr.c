@@ -17,11 +17,24 @@
 
 #include "route.h"
 
+#include <pthread.h>
+
+pthread_t route_thread;
+
+void* route__run(void* params){
+  return NULL;
+}
+
 int route_init(struct sahn_config_t* config){
+  pthread_create(&route_thread,NULL,route__run,NULL);
+
   return 0;
 }
 
 int route_cleanup(){
+  pthread_cancel(route_thread);
+  pthread_join(route_thread,NULL);
+
   return 0;
 }
 
