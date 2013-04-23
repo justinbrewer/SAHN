@@ -16,16 +16,24 @@
  */
 
 #include "route.h"
+#include "topo.h"
 
 #include <pthread.h>
+#include <stdlib.h>
 
 pthread_t route_thread;
+
+uint16_t local_address;
+uint16_t num_physical_links;
+uint16_t* physical_links = NULL;
 
 void* route__run(void* params){
   return NULL;
 }
 
 int route_init(struct sahn_config_t* config){
+  route_update_links();
+
   pthread_create(&route_thread,NULL,route__run,NULL);
 
   return 0;
@@ -35,10 +43,26 @@ int route_cleanup(){
   pthread_cancel(route_thread);
   pthread_join(route_thread,NULL);
 
+  free(physical_links);
+
   return 0;
 }
 
 int route_update_links(){
+  struct topo_node* node = topo_get_local_node();
+
+  if(physical_links != NULL){
+    free(physical_links);
+  }
+
+  local_address = node->address;
+  num_physical_links = node->num_links;
+
+  physical_links = node->links;
+  node->links = NULL;
+
+  topo_free_node(node);
+
   return 0;
 }
 
