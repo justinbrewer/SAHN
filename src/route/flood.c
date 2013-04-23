@@ -27,7 +27,7 @@ uint16_t num_links;
 uint16_t* links;
 
 int route_init(struct sahn_config_t* config){
-  struct topo_node* node = topo_get_local_node();
+  struct topo_node_t* node = topo_get_local_node();
   
   local_address = node->address;
   num_links = node->num_links;
@@ -47,7 +47,7 @@ int route_cleanup(){
 }
 
 int route_update_links(){
-  struct topo_node* node = topo_get_local_node();
+  struct topo_node_t* node = topo_get_local_node();
 
   free(links);
 

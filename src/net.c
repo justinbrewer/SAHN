@@ -83,7 +83,7 @@ int net_init(struct sahn_config_t* config){
 
   net_recv_queue = queue_create();
 
-  struct topo_node* node = topo_get_local_node();
+  struct topo_node_t* node = topo_get_local_node();
   local_address = node->address;
   topo_free_node(node);
 

@@ -49,7 +49,7 @@ int route_cleanup(){
 }
 
 int route_update_links(){
-  struct topo_node* node = topo_get_local_node();
+  struct topo_node_t* node = topo_get_local_node();
 
   if(physical_links != NULL){
     free(physical_links);

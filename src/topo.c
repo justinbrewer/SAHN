@@ -31,7 +31,7 @@
 char* topo_file;
 
 struct cache_t* node_cache;
-struct topo_node* topo_local_node;
+struct topo_node_t* topo_local_node;
 uint16_t topo_local_address;
 
 unsigned int topo_drop_divisor;
@@ -42,7 +42,7 @@ int topo_inotify_fd;
 int topo__update_nodes(){
   char links_buf[64], *link;
   FILE* fp;
-  struct topo_node* node;
+  struct topo_node_t* node;
 
   cache_lock(node_cache);
   cache_flush__crit(node_cache);
@@ -51,7 +51,7 @@ int topo__update_nodes(){
   fp = fopen(topo_file,"r");
   
   while(!feof(fp)){
-    node = (struct topo_node*)malloc(sizeof(struct topo_node));
+    node = (struct topo_node_t*)malloc(sizeof(struct topo_node_t));
     
     fscanf(fp,"Node %hu %64[^,], %8s %hd %hd links %64[^\n]\n",
 	   &node->address,
@@ -128,11 +128,11 @@ int topo_cleanup(){
   return 0;
 }
 
-struct topo_node* topo_get_local_node(){
+struct topo_node_t* topo_get_local_node(){
   return topo_copy_node(topo_local_node);
 }
 
-struct topo_node* topo_get_node(uint16_t address){
+struct topo_node_t* topo_get_node(uint16_t address){
   return topo_copy_node(cache_get(node_cache,address));
 }
 
@@ -142,8 +142,8 @@ unsigned int topo_get_num_nodes(){
 
 uint32_t topo_drop_rate(uint16_t remote_node){
   int x, y;
-  const struct topo_coord* a = &topo_local_node->loc;
-  const struct topo_coord* b = &((struct topo_node*)cache_get(node_cache,remote_node))->loc;
+  const struct topo_coord_t* a = &topo_local_node->loc;
+  const struct topo_coord_t* b = &((struct topo_node_t*)cache_get(node_cache,remote_node))->loc;
 
   x = a->x - b->x;
   x *= x;
@@ -155,19 +155,19 @@ uint32_t topo_drop_rate(uint16_t remote_node){
   return x / topo_drop_divisor;
 }
 
-struct topo_node* topo_alloc_node(){
-  struct topo_node* node = (struct topo_node*)malloc(sizeof(struct topo_node));
-  memset(node,0,sizeof(struct topo_node));
+struct topo_node_t* topo_alloc_node(){
+  struct topo_node_t* node = (struct topo_node_t*)malloc(sizeof(struct topo_node_t));
+  memset(node,0,sizeof(struct topo_node_t));
   return node;
 }
 
-struct topo_node* topo_copy_node(struct topo_node* node){
+struct topo_node_t* topo_copy_node(struct topo_node_t* node){
   if(node == NULL){
     return NULL;
   }
 
-  struct topo_node* res = topo_alloc_node();
-  memcpy(res,node,sizeof(struct topo_node));
+  struct topo_node_t* res = topo_alloc_node();
+  memcpy(res,node,sizeof(struct topo_node_t));
 
   res->links = (uint16_t*)malloc(res->num_links*sizeof(uint16_t));
   memcpy(res->links,node->links,res->num_links*sizeof(uint16_t));
@@ -175,7 +175,7 @@ struct topo_node* topo_copy_node(struct topo_node* node){
   return res;
 }
 
-int topo_free_node(struct topo_node* node){
+int topo_free_node(struct topo_node_t* node){
   if(node->links != NULL){
     free(node->links);
   }
