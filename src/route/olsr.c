@@ -29,6 +29,10 @@ int route_update_links(){
   return 0;
 }
 
+int route_control_packet(struct net_packet_t* packet){
+  return 0;
+}
+
 int route_dispatch_packet(struct net_packet_t* packet){
   return 0;
 }

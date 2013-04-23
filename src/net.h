@@ -30,7 +30,7 @@ struct net_packet_t {
   uint16_t prev_hop;
   uint16_t seq;
   uint8_t size;
-  uint8_t __header_padding[3];
+  uint8_t route_control[3];
   uint8_t payload[NET_MAX_PAYLOAD];
 } __attribute__((__packed__));
 

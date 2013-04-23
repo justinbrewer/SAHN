@@ -59,6 +59,12 @@ void* net__run(void* params){
     udp_recv(NULL,&packet,sizeof(struct net_packet_t));
     net_ntoh(&packet);
 
+    //TODO: Should route control packets use seq table?
+    if(packet.route_control[0] != 0){
+      route_control_packet(&packet);
+      continue;
+    }
+
     if(!seq_check(packet.source,packet.seq)){
       continue;
     }
