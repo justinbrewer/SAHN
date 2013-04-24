@@ -35,8 +35,7 @@ struct route_neighbor_t {
   uint8_t state;
   uint8_t __zero;
   time_t last_heard;
-  int* bidir;
-  uint32_t bidir_count;
+  struct set_t* bidir;
 } __attribute__((packed));
 
 pthread_t route_thread;
@@ -46,6 +45,13 @@ uint16_t num_physical_links;
 uint16_t* physical_links = NULL;
 
 struct cache_t* neighbor_cache;
+
+void route__free_neighbor(struct route_neighbor_t* n){
+  if(n->bidir != NULL){
+    set_destroy(n->bidir);
+  }
+  free(n);
+}
 
 void route__check_expiry(){
   int i,len;
@@ -64,15 +70,19 @@ void route__check_expiry(){
 }
 
 void route__update_mpr(){
-  int i,j,neighbor_len,max,max_i,two_hop_len=0,*two_hop=NULL,*two_hop_n;
+  int i,j,neighbor_len,max,max_i;
   struct route_neighbor_t** neighbor_list;
+  struct set_t *two_hop, *two_hop_n;
 
   neighbor_len = cache_len__crit(neighbor_cache);
-  neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
 
   if(neighbor_len == 0){
     return;
   }
+
+  neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
+
+  two_hop = set_create();
 
   for(i=0;i<neighbor_len;i++){
     if(neighbor_list[i]->state == NEIGHBOR_MPR){
@@ -81,7 +91,7 @@ void route__update_mpr(){
   }
 
   while(1){
-    max = two_hop_len;
+    max = two_hop->num;
     max_i = -1;
 
     for(i=0;i<neighbor_len;i++){
@@ -89,7 +99,7 @@ void route__update_mpr(){
 	continue;
       }
 
-      j = set_union_size(two_hop,two_hop_len,neighbor_list[i]->bidir,neighbor_list[i]->bidir_count);
+      j = set_union_size(two_hop,neighbor_list[i]->bidir);
 
       if(j > max){
 	max = j;
@@ -103,13 +113,12 @@ void route__update_mpr(){
 
     neighbor_list[max_i]->state = NEIGHBOR_MPR;
 
-    two_hop_n = set_union(two_hop,two_hop_len,neighbor_list[max_i]->bidir,neighbor_list[max_i]->bidir_count,&two_hop_len);
-    if(two_hop != NULL){
-      free(two_hop);
-    }
+    two_hop_n = set_union(two_hop,neighbor_list[max_i]->bidir);
+    set_destroy(two_hop);
     two_hop = two_hop_n;
   }
 
+  set_destory(two_hop);
   free(neighbor_list);
 }
 
@@ -167,7 +176,7 @@ void* route__run(void* params){
 
 int route_init(struct sahn_config_t* config){
   route_update_links();
-  neighbor_cache = cache_create(free);
+  neighbor_cache = cache_create((cache_free_t)route__free_neighbor);
 
   pthread_create(&route_thread,NULL,route__run,NULL);
 
@@ -204,7 +213,7 @@ int route_update_links(){
 
 int route_control_packet(struct net_packet_t* packet){
   int i, cap, addr;
-  struct route_neighbor_t *neighbor;
+  struct route_neighbor_t *neighbor, j;
 
   switch(packet->route_control[0]){
   case ROUTE_HELLO:
@@ -220,26 +229,18 @@ int route_control_packet(struct net_packet_t* packet){
     }
 
     i=0;
-    cap=16;
 
     if(neighbor->bidir != NULL){
-      free(neighbor->bidir);
+      set_destroy(neighbor->bidir);
     }
 
-    neighbor->bidir = (int*)malloc(cap*sizeof(int));
-    neighbor->bidir_count = 0;
+    neighbor->bidir = set_create();
 
-    while((addr = *(uint16_t*)(&packet->payload[i*4])) != 0){
-      neighbor->bidir[i++] = addr;
-      neighbor->bidir_count++;
+    while((*(uint32_t*)(&j) = *(uint32_t*)(&packet->payload[i++*4])) != 0){
+      set_add(neighbor->bidir,j.address);
 
-      if(addr == local_address){
+      if(j.address == local_address){
 	neighbor->state = NEIGHBOR_BIDIRECTIONAL;
-      }
-
-      if(cap == neighbor->bidir_count){
-	cap = (cap*3)/2;
-	neighbor->bidir = (int*)realloc(neighbor->bidir,cap*sizeof(int));
       }
     }
 

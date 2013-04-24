@@ -20,7 +20,69 @@
 #include <stdlib.h>
 #include <string.h>
 
-int* set_union(int* a, uint32_t a_size, int* b, uint32_t b_size, uint32_t* c_size){
+int set__compare(const void* a, const void* b){
+  return *((const int*)a) - *((const int*)b);
+}
+
+struct set_t* set_create(){
+  struct set_t* set = (struct set_t*)malloc(sizeof(struct set_t));
+  set->num = 0;
+  set->cap = 16;
+  set->values = (int*)malloc(set->cap*sizeof(int));
+  return set;
+}
+
+struct set_t* set_wrap(int* values, size_t num){
+  struct set_t* set = (struct set_t*)malloc(sizeof(struct set_t));
+  set->values = values;
+  set->num = num;
+  set->cap = num;
+  return set;
+}
+
+int set_destroy(struct set_t* set){
+  if(set->values != NULL){
+    free(set->values);
+  }
+  free(set);
+  return 0;
+}
+
+int set_add(struct set_t* set, int value){
+  int* pos = bsearch(&value,set->values,set->num,sizeof(int),set__compare);
+
+  if(pos == NULL){
+    if(set->cap == set->num){
+      set->cap = (set->cap*3)/2;
+      set->values = (int*)realloc(set->values,set->cap*sizeof(int));
+    }
+    set->values[set->num++] = value;
+    qsort(set->values,set->num,sizeof(int),set__compare);
+  }
+
+  return 0;
+}
+
+int set_remove(struct set_t* set, int value){}
+
+struct set_t* set_union(struct set_t* a, struct set_t* b){
+  int* values;
+  size_t num;
+
+  values = set_union__raw(a->values,a->num,b->values,b->num,&num);
+
+  return set_wrap(values,num);
+}
+
+size_t set_union_size(struct set_t* a, struct set_t* b){
+  return set_union_size__raw(a->values,a->num,b->values,b->num);
+}
+
+size_t set_intersect_size(struct set_t* a, struct set_t* b){
+  return set_intersect_size__raw(a->values,a->num,b->values,b->num);
+}
+
+int* set_union__raw(int* a, size_t a_size, int* b, size_t b_size, size_t* c_size){
   int* c;
   int i=0,j=0,k;
 
@@ -43,7 +105,7 @@ int* set_union(int* a, uint32_t a_size, int* b, uint32_t b_size, uint32_t* c_siz
     }
   }
 
-  (*c_size) = set_union_size(a,a_size,b,b_size);
+  (*c_size) = set_union_size__raw(a,a_size,b,b_size);
   c = (int*)malloc((*c_size)*sizeof(int));
 
   for(k=0;k<(*c_size);k++){
@@ -64,7 +126,7 @@ int* set_union(int* a, uint32_t a_size, int* b, uint32_t b_size, uint32_t* c_siz
   return c;
 }
 
-uint32_t set_union_size(int* a, uint32_t a_size, int* b, uint32_t b_size){
+size_t set_union_size__raw(int* a, size_t a_size, int* b, size_t b_size){
   if(a_size == 0){
     if(b_size == 0){
       return 0;
@@ -77,11 +139,11 @@ uint32_t set_union_size(int* a, uint32_t a_size, int* b, uint32_t b_size){
     }
   }
 
-  return a_size + b_size - set_intersect_size(a,a_size,b,b_size);
+  return a_size + b_size - set_intersect_size__raw(a,a_size,b,b_size);
 }
 
-uint32_t set_intersect_size(int* a, uint32_t a_size, int* b, uint32_t b_size){
-  uint32_t c=0,i,j;
+size_t set_intersect_size__raw(int* a, size_t a_size, int* b, size_t b_size){
+  size_t c=0,i,j;
 
   if(a_size == 0 || b_size == 0){
     return 0;

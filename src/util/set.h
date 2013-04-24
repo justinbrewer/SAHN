@@ -15,9 +15,28 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
+#include <stddef.h>
 #include <stdint.h>
 
-int* set_union(int* a, uint32_t a_size, int* b, uint32_t b_size, uint32_t* c_size);
+struct set_t {
+  int* values;
+  size_t num;
+  size_t cap;
+};
 
-uint32_t set_union_size(int* a, uint32_t a_size, int* b, uint32_t b_size);
-uint32_t set_intersect_size(int* a, uint32_t a_size, int* b, uint32_t b_size);
+struct set_t* set_create();
+struct set_t* set_wrap(int* values, size_t num);
+int set_destroy(struct set_t* set);
+
+int set_add(struct set_t* set, int value);
+int set_remove(struct set_t* set, int value);
+
+struct set_t* set_union(struct set_t* a, struct set_t* b);
+size_t set_union_size(struct set_t* a, struct set_t* b);
+size_t set_intersect_size(struct set_t* a, struct set_t* b);
+
+int* set_union__raw(int* a, size_t a_size, int* b, size_t b_size, size_t* c_size);
+size_t set_union_size__raw(int* a, size_t a_size, int* b, size_t b_size);
+size_t set_intersect_size__raw(int* a, size_t a_size, int* b, size_t b_size);
