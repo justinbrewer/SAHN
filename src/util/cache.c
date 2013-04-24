@@ -139,6 +139,18 @@ int cache_set(struct cache_t* cache, uint32_t key, void* val){
   return ret;
 }
 
+int cache_delete(struct cache_t* cache, uint32_t key){
+  int ret;
+
+  pthread_rwlock_wrlock(&cache->lock);
+
+  ret = cache_delete__crit(cache,key);
+
+  pthread_rwlock_unlock(&cache->lock);
+
+  return ret;
+}
+
 uint32_t cache_len(struct cache_t* cache){
   uint32_t len;
 
@@ -234,6 +246,33 @@ int cache_set__crit(struct cache_t* cache, uint32_t key, void* val){
 
     entry->val = val;
   }
+
+  return 0;
+}
+
+int cache_delete__crit(struct cache_t* cache, uint32_t key){
+  int index;
+  struct cache_entry_t* entry;
+
+  entry = cache__find(cache,key);
+
+  if(entry == NULL){
+    return -1;
+  }
+
+  if(cache->free_callback != NULL){
+    cache->free_callback(entry->val);
+  }
+
+  index = (entry - cache->entries)/sizeof(struct cache_entry_t);
+
+  if(index != cache->num - 1){
+    memmove(entry,entry+sizeof(struct cache_entry_t),(cache->num - index)*sizeof(struct cache_entry_t));
+  } else {
+    memset(entry,0,sizeof(struct cache_entry_t));
+  }
+
+  cache->num--;
 
   return 0;
 }
