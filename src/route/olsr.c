@@ -33,7 +33,8 @@ struct route_neighbor_t {
   uint16_t address;
   uint8_t state;
   uint8_t __zero;
-  time_t age;
+  time_t last_heard;
+  uint16_t bidir[32];
 } __attribute__((packed));
 
 pthread_t route_thread;
@@ -124,9 +125,38 @@ int route_update_links(){
 }
 
 int route_control_packet(struct net_packet_t* packet){
+  int i;
+  struct route_neighbor_t *neighbor, hop_neighbor;
+
   switch(packet->route_control[0]){
   case ROUTE_HELLO:
+    cache_lock(neighbor_cache);
+    neighbor = cache_get__crit(neighbor_cache,packet->source);
+
+    if(neighbor == NULL){
+      neighbor = (struct route_neighbor_t*)malloc(sizeof(struct route_neighbor_t));
+      memset(neighbor,0,sizeof(struct route_neighbor_t));
+      neighbor->address = packet->source;
+      neighbor->state = NEIGHBOR_HEARD;
+      cache_set__crit(neighbor_cache,packet->source,neighbor);
+    }
+
+    for(i=0;(neighbor->bidir[i] = *(uint16_t*)(&packet->payload[i]));i+=4){
+      if(neighbor->bidir[i] == local_address){
+	neighbor->state = NEIGHBOR_BIDIRECTIONAL;
+      }
+    }
+
+    for(i=0;i<packet->size-NET_HEADER_SIZE;i+=4){
+      if(*(uint16_t*)(&packet->payload[i]) == local_address){
+	neighbor->state = NEIGHBOR_BIDIRECTIONAL;
+      }
+    }
+
+    neighbor->last_heard = time(NULL);
+    cache_unlock(neighbor_cache);
     break;
+
   case ROUTE_TC:
     break;
   default:
