@@ -64,28 +64,33 @@ void route__check_expiry(){
 }
 
 void route__update_mpr(){
-  int i,j,len,max,max_i,two_hops_len=0,done=0;
-  struct route_neighbor_t* neighbor_list;
-  int *two_hops=NULL, *two_hops_n;
+  int i,j,neighbor_len,max,max_i,two_hop_len=0,*two_hop=NULL,*two_hop_n;
+  struct route_neighbor_t** neighbor_list;
 
-  len = cache_len__crit(neighbor_cache);
-  neighbor_list = (struct route_neighbor_t*)cache_get_list__crit(neighbor_cache);
+  neighbor_len = cache_len__crit(neighbor_cache);
+  neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
 
-  for(i=0;i<len;i++){
-    if(neighbor_list[i].state == NEIGHBOR_MPR){
-      ((struct route_neighbor_t*)cache_get__crit(neighbor_cache,neighbor_list[i].address))->state = NEIGHBOR_BIDIRECTIONAL;
+  if(neighbor_len == 0){
+    return;
+  }
+
+  for(i=0;i<neighbor_len;i++){
+    if(neighbor_list[i]->state == NEIGHBOR_MPR){
+      neighbor_list[i]->state = NEIGHBOR_BIDIRECTIONAL;
     }
   }
 
   while(1){
-    max = two_hops_len;
+    max = two_hop_len;
     max_i = -1;
-    for(i=0;i<len;i++){
-      if(neighbor_list[i].state == NEIGHBOR_HEARD){
+
+    for(i=0;i<neighbor_len;i++){
+      if(neighbor_list[i]->state == NEIGHBOR_HEARD){
 	continue;
       }
 
-      j = set_union_size(two_hops,two_hops_len,neighbor_list[i].bidir,neighbor_list[i].bidir_count);
+      j = set_union_size(two_hop,two_hop_len,neighbor_list[i]->bidir,neighbor_list[i]->bidir_count);
+
       if(j > max){
 	max = j;
 	max_i = i;
@@ -96,15 +101,13 @@ void route__update_mpr(){
       break;
     }
 
-    two_hops_n = set_union(two_hops,two_hops_len,neighbor_list[max_i].bidir,neighbor_list[max_i].bidir_count,&two_hops_len);
+    neighbor_list[max_i]->state = NEIGHBOR_MPR;
 
-    if(two_hops != NULL){
-      free(two_hops);
+    two_hop_n = set_union(two_hop,two_hop_len,neighbor_list[max_i]->bidir,neighbor_list[max_i]->bidir_count,&two_hop_len);
+    if(two_hop != NULL){
+      free(two_hop);
     }
-
-    two_hops = two_hops_n;
-
-    neighbor_list[max_i].state = NEIGHBOR_MPR;
+    two_hop = two_hop_n;
   }
 
   free(neighbor_list);
