@@ -63,7 +63,22 @@ int set_add(struct set_t* set, int value){
   return 0;
 }
 
-int set_remove(struct set_t* set, int value){}
+int set_remove(struct set_t* set, int value){
+  int index;
+  int* pos = bsearch(&value,set->values,set->num,sizeof(int),set__compare);
+
+  if(pos != NULL){
+    if(pos == &set->values[num-1]){
+      *pos = 0;
+      num--;
+    } else {
+      index = (pos - set->values)/sizeof(int);
+      memmove(pos,pos+sizeof(int),(set->num - index)*sizeof(int));
+    }
+  }
+
+  return 0;
+}
 
 struct set_t* set_union(struct set_t* a, struct set_t* b){
   int* values;

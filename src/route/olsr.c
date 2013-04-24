@@ -45,6 +45,7 @@ uint16_t num_physical_links;
 uint16_t* physical_links = NULL;
 
 struct cache_t* neighbor_cache;
+struct set_t* mpr_selector;
 
 void route__free_neighbor(struct route_neighbor_t* n){
   if(n->bidir != NULL){
@@ -177,6 +178,7 @@ void* route__run(void* params){
 int route_init(struct sahn_config_t* config){
   route_update_links();
   neighbor_cache = cache_create((cache_free_t)route__free_neighbor);
+  mpr_selector = set_create();
 
   pthread_create(&route_thread,NULL,route__run,NULL);
 
@@ -241,6 +243,15 @@ int route_control_packet(struct net_packet_t* packet){
 
       if(j.address == local_address){
 	neighbor->state = NEIGHBOR_BIDIRECTIONAL;
+
+	switch(j.state){
+	case NEIGHBOR_MPR:
+	  set_add(mpr_selector,j.address);
+	  break;
+	case NIGHBOR_BIDIRECTIONAL:
+	  set_remove(mpr_selector,j.address);
+	  break;
+	}
       }
     }
 
