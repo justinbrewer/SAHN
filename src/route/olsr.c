@@ -100,7 +100,7 @@ void route__update_mpr(){
     max_i = -1;
 
     for(i=0;i<neighbor_len;i++){
-      if(neighbor_list[i]->state == NEIGHBOR_HEARD){
+      if(neighbor_list[i]->state == NEIGHBOR_HEARD || neighbor_list[i]->state == NEIGHBOR_MPR){
 	continue;
       }
 
