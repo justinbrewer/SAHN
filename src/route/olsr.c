@@ -72,7 +72,7 @@ void* route__run(void* params){
       }
     }
 
-    packet.size = NET_HEADER_SIZE + len*4;
+    packet.size = NET_HEADER_SIZE + j*4;
 
     net_hton(&packet);
     for(i=0;i<num_physical_links;i++){
