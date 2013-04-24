@@ -54,8 +54,8 @@ void route__send_hello(){
   packet.destination = 0xFFFF;
   packet.route_control[0] = ROUTE_HELLO;
 
-  len = cache_len(neighbor_cache);
-  neighbor_list = (struct route_neighbor_t*)cache_get_list(neighbor_cache);
+  len = cache_len__crit(neighbor_cache);
+  neighbor_list = (struct route_neighbor_t*)cache_get_list__crit(neighbor_cache);
 
   for(i=0;i<len;i++){
     if(neighbor_list[i].state == NEIGHBOR_BIDIRECTIONAL || neighbor_list[i].state == NEIGHBOR_MPR){
@@ -81,7 +81,11 @@ void route__send_hello(){
 
 void* route__run(void* params){
   while(1){
+    cache_lock(neighbor_cache);
+
     route__send_hello();
+
+    cache_unlock(neighbor_cache);
 
     sleep(1);
   }
