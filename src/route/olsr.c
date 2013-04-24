@@ -45,6 +45,20 @@ uint16_t* physical_links = NULL;
 
 struct cache_t* neighbor_cache;
 
+void route__check_expiry(){
+  int i,len;
+  struct route_neighbor_t* neighbor_list;
+
+  len = cache_len__crit(neighbor_cache);
+  neighbor_list = (struct route_neighbor_t*)cache_get_list__crit(neighbor_cache);
+
+  for(i=0;i<len;i++){
+    if(difftime(time(NULL),neighbor_list[i].last_heard) > 10.0){
+      cache_delete__crit(neighbor_cache,neighbor_list[i].address);
+    }
+  }
+}
+
 void route__send_hello(){
   int i,j=0,len;
   struct route_neighbor_t* neighbor_list;
@@ -83,6 +97,7 @@ void* route__run(void* params){
   while(1){
     cache_lock(neighbor_cache);
 
+    route__check_expiry();
     route__send_hello();
 
     cache_unlock(neighbor_cache);
