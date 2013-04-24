@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+typedef enum { ROUTE_HELLO=1, ROUTE_TC=2 } route_control_id_t;
 typedef enum { NEIGHBOR_HEARD=1, NEIGHBOR_BIDIRECTIONAL=2, NEIGHBOR_MPR=3 } route_link_state_t;
 
 struct route_neighbor_t {
@@ -83,6 +84,15 @@ int route_update_links(){
 }
 
 int route_control_packet(struct net_packet_t* packet){
+  switch(packet->route_control[0]){
+  case ROUTE_HELLO:
+    break;
+  case ROUTE_TC:
+    break;
+  default:
+    break;
+  }
+
   return 0;
 }
 
