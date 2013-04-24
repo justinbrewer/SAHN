@@ -68,9 +68,9 @@ int set_remove(struct set_t* set, int value){
   int* pos = bsearch(&value,set->values,set->num,sizeof(int),set__compare);
 
   if(pos != NULL){
-    if(pos == &set->values[num-1]){
+    if(pos == &set->values[set->num-1]){
       *pos = 0;
-      num--;
+      set->num--;
     } else {
       index = (pos - set->values)/sizeof(int);
       memmove(pos,pos+sizeof(int),(set->num - index)*sizeof(int));

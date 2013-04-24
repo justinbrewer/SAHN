@@ -119,7 +119,7 @@ void route__update_mpr(){
     two_hop = two_hop_n;
   }
 
-  set_destory(two_hop);
+  set_destroy(two_hop);
   free(neighbor_list);
 }
 
@@ -248,7 +248,7 @@ int route_control_packet(struct net_packet_t* packet){
 	case NEIGHBOR_MPR:
 	  set_add(mpr_selector,j.address);
 	  break;
-	case NIGHBOR_BIDIRECTIONAL:
+	case NEIGHBOR_BIDIRECTIONAL:
 	  set_remove(mpr_selector,j.address);
 	  break;
 	}
