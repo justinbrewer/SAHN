@@ -19,6 +19,7 @@
 #include "topo.h"
 #include "udp.h"
 #include "util/cache.h"
+#include "util/set.h"
 
 #include <pthread.h>
 #include <stdint.h>
@@ -34,7 +35,8 @@ struct route_neighbor_t {
   uint8_t state;
   uint8_t __zero;
   time_t last_heard;
-  uint16_t bidir[32];
+  int bidir[32];
+  uint32_t bidir_count;
 } __attribute__((packed));
 
 pthread_t route_thread;
@@ -57,6 +59,55 @@ void route__check_expiry(){
       cache_delete__crit(neighbor_cache,neighbor_list[i].address);
     }
   }
+
+  free(neighbor_list);
+}
+
+void route__update_mpr(){
+  int i,j,len,max,max_i,two_hops_len=0,done=0;
+  struct route_neighbor_t* neighbor_list;
+  int *two_hops=NULL, *two_hops_n;
+
+  len = cache_len__crit(neighbor_cache);
+  neighbor_list = (struct route_neighbor_t*)cache_get_list__crit(neighbor_cache);
+
+  for(i=0;i<len;i++){
+    if(neighbor_list[i].state == NEIGHBOR_MPR){
+      ((struct route_neighbor_t*)cache_get__crit(neighbor_cache,neighbor_list[i].address))->state = NEIGHBOR_BIDIRECTIONAL;
+    }
+  }
+
+  while(1){
+    max = two_hops_len;
+    max_i = -1;
+    for(i=0;i<len;i++){
+      if(neighbor_list[i].state == NEIGHBOR_HEARD){
+	continue;
+      }
+
+      j = set_union_size(two_hops,two_hops_len,neighbor_list[i].bidir,neighbor_list[i].bidir_count);
+      if(j > max){
+	max = j;
+	max_i = i;
+      }
+    }
+
+    if(max_i == -1){
+      break;
+    }
+
+    two_hops_n = set_union(two_hops,two_hops_len,neighbor_list[max_i].bidir,neighbor_list[max_i].bidir_count,&two_hops_len);
+
+    if(two_hops != NULL){
+      free(two_hops);
+    }
+
+    two_hops = two_hops_n;
+
+    neighbor_list[max_i].state = NEIGHBOR_MPR;
+  }
+
+  free(neighbor_list);
 }
 
 void route__send_hello(){
@@ -91,6 +142,8 @@ void route__send_hello(){
   for(i=0;i<num_physical_links;i++){
     udp_send(physical_links[i],&packet,packet.size);
   }
+
+  free(neighbor_list);
 }
 
 void* route__run(void* params){
@@ -98,6 +151,7 @@ void* route__run(void* params){
     cache_lock(neighbor_cache);
 
     route__check_expiry();
+    route__update_mpr();
     route__send_hello();
 
     cache_unlock(neighbor_cache);
@@ -162,7 +216,8 @@ int route_control_packet(struct net_packet_t* packet){
       cache_set__crit(neighbor_cache,packet->source,neighbor);
     }
 
-    for(i=0;(neighbor->bidir[i] = *(uint16_t*)(&packet->payload[i]));i+=4){
+    for(i=0,neighbor->bidir_count=0;(neighbor->bidir[i] = *(uint16_t*)(&packet->payload[i]));i+=4){
+      neighbor->bidir_count++;
       if(neighbor->bidir[i] == local_address){
 	neighbor->state = NEIGHBOR_BIDIRECTIONAL;
       }
