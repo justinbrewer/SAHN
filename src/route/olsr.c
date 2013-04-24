@@ -22,6 +22,7 @@
 #include "util/set.h"
 
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,6 +48,7 @@ uint16_t* physical_links = NULL;
 struct cache_t* neighbor_cache;
 
 uint16_t mpr_seq;
+bool mpr_changed;
 struct set_t* mpr_selector;
 
 void route__free_neighbor(struct route_neighbor_t* n){
@@ -161,6 +163,33 @@ void route__send_hello(){
   free(neighbor_list);
 }
 
+void route__send_tc(){
+  int i=0,j;
+  struct net_packet_t packet = {0};
+
+  if(!mpr_changed){
+    return;
+  }
+  mpr_changed = false;
+
+  packet.source = local_address;
+  packet.destination = 0xFFFF;
+  packet.route_control[0] = ROUTE_TC;
+
+  *(uint16_t*)(&packet.payload[i++*2]) = mpr_seq;
+
+  for(j=0;j<mpr_selector->num;j++){
+    *(uint16_t*)(&packet.payload[i++*2]) = mpr_selector->values[j];
+  }
+
+  packet.size = NET_HEADER_SIZE + i*2;
+
+  net_hton(&packet);
+  for(i=0;i<num_physical_links;i++){
+    udp_send(physical_links[i],&packet,packet.size);
+  }
+}
+
 void* route__run(void* params){
   while(1){
     cache_lock(neighbor_cache);
@@ -168,6 +197,7 @@ void* route__run(void* params){
     route__check_expiry();
     route__update_mpr();
     route__send_hello();
+    route__send_tc();
 
     cache_unlock(neighbor_cache);
 
@@ -182,6 +212,7 @@ int route_init(struct sahn_config_t* config){
   neighbor_cache = cache_create((cache_free_t)route__free_neighbor);
 
   mpr_seq = 0;
+  mpr_changed = false;
   mpr_selector = set_create();
 
   pthread_create(&route_thread,NULL,route__run,NULL);
@@ -250,13 +281,15 @@ int route_control_packet(struct net_packet_t* packet){
 
 	switch(j.state){
 	case NEIGHBOR_MPR:
-	  if(set_add(mpr_selector,j.address)){
+	  if(set_add(mpr_selector,packet->source)){
 	    mpr_seq++;
+	    mpr_changed = true;
 	  }
 	  break;
 	case NEIGHBOR_BIDIRECTIONAL:
-	  if(set_remove(mpr_selector,j.address)){
+	  if(set_remove(mpr_selector,packet->source)){
 	    mpr_seq++;
+	    mpr_changed = true;
 	  }
 	  break;
 	}
