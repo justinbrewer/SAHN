@@ -58,6 +58,7 @@ int set_add(struct set_t* set, int value){
     }
     set->values[set->num++] = value;
     qsort(set->values,set->num,sizeof(int),set__compare);
+    return 1;
   }
 
   return 0;
@@ -75,6 +76,7 @@ int set_remove(struct set_t* set, int value){
       index = (pos - set->values)/sizeof(int);
       memmove(pos,pos+sizeof(int),(set->num - index)*sizeof(int));
     }
+    return 1;
   }
 
   return 0;
