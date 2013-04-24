@@ -35,7 +35,7 @@ struct route_neighbor_t {
   uint8_t state;
   uint8_t __zero;
   time_t last_heard;
-  int bidir[32];
+  int* bidir;
   uint32_t bidir_count;
 } __attribute__((packed));
 
@@ -200,8 +200,8 @@ int route_update_links(){
 }
 
 int route_control_packet(struct net_packet_t* packet){
-  int i;
-  struct route_neighbor_t *neighbor, hop_neighbor;
+  int i, cap, addr;
+  struct route_neighbor_t *neighbor;
 
   switch(packet->route_control[0]){
   case ROUTE_HELLO:
@@ -216,10 +216,27 @@ int route_control_packet(struct net_packet_t* packet){
       cache_set__crit(neighbor_cache,packet->source,neighbor);
     }
 
-    for(i=0,neighbor->bidir_count=0;(neighbor->bidir[i] = *(uint16_t*)(&packet->payload[i]));i+=4){
+    i=0;
+    cap=16;
+
+    if(neighbor->bidir != NULL){
+      free(neighbor->bidir);
+    }
+
+    neighbor->bidir = (int*)malloc(cap*sizeof(int));
+    neighbor->bidir_count = 0;
+
+    while((addr = *(uint16_t*)(&packet->payload[i*4])) != 0){
+      neighbor->bidir[i++] = addr;
       neighbor->bidir_count++;
-      if(neighbor->bidir[i] == local_address){
+
+      if(addr == local_address){
 	neighbor->state = NEIGHBOR_BIDIRECTIONAL;
+      }
+
+      if(cap == neighbor->bidir_count){
+	cap = (cap*3)/2;
+	neighbor->bidir = (int*)realloc(neighbor->bidir,cap*sizeof(int));
       }
     }
 
