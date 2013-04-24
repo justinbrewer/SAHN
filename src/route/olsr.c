@@ -17,11 +17,13 @@
 
 #include "route.h"
 #include "topo.h"
+#include "udp.h"
 #include "util/cache.h"
 
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 typedef enum { ROUTE_HELLO=1, ROUTE_TC=2 } route_control_id_t;
@@ -40,9 +42,47 @@ uint16_t local_address;
 uint16_t num_physical_links;
 uint16_t* physical_links = NULL;
 
-cache_t* neighbor_cache;
+struct cache_t* neighbor_cache;
 
 void* route__run(void* params){
+  int i,j,len;
+  struct route_neighbor_t* neighbor_list;
+  struct net_packet_t packet = {0};
+  
+  packet.source = local_address;
+  packet.destination = 0xFFFF;
+  packet.route_control[0] = ROUTE_HELLO;
+  
+  while(1){
+    j=0;
+    len = cache_len(neighbor_cache);
+    neighbor_list = (struct route_neighbor_t*)cache_get_list(neighbor_cache);
+
+    for(i=0;i<len;i++){
+      if(neighbor_list[i].state == NEIGHBOR_BIDIRECTIONAL || neighbor_list[i].state == NEIGHBOR_MPR){
+	*(uint32_t*)(&packet.payload[j++*4]) = *(uint32_t*)(&neighbor_list[i]);
+      }
+    }
+
+    *(uint32_t*)(&packet.payload[j++*4]) = 0;
+
+    for(i=0;i<len;i++){
+      if(neighbor_list[i].state == NEIGHBOR_HEARD){
+	*(uint32_t*)(&packet.payload[j++*4]) = *(uint32_t*)(&neighbor_list[i]);
+      }
+    }
+
+    packet.size = NET_HEADER_SIZE + len*4;
+
+    net_hton(&packet);
+    for(i=0;i<num_physical_links;i++){
+      udp_send(physical_links[i],&packet,packet.size);
+    }
+    net_ntoh(&packet);
+
+    sleep(1);
+  }
+
   return NULL;
 }
 
