@@ -49,14 +49,14 @@ struct cache_t* neighbor_cache;
 
 void route__check_expiry(){
   int i,len;
-  struct route_neighbor_t* neighbor_list;
+  struct route_neighbor_t** neighbor_list;
 
   len = cache_len__crit(neighbor_cache);
-  neighbor_list = (struct route_neighbor_t*)cache_get_list__crit(neighbor_cache);
+  neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
 
   for(i=0;i<len;i++){
-    if(difftime(time(NULL),neighbor_list[i].last_heard) > 10.0){
-      cache_delete__crit(neighbor_cache,neighbor_list[i].address);
+    if(difftime(time(NULL),neighbor_list[i]->last_heard) > 10.0){
+      cache_delete__crit(neighbor_cache,neighbor_list[i]->address);
     }
   }
 
@@ -112,7 +112,7 @@ void route__update_mpr(){
 
 void route__send_hello(){
   int i,j=0,len;
-  struct route_neighbor_t* neighbor_list;
+  struct route_neighbor_t** neighbor_list;
   struct net_packet_t packet = {0};
   
   packet.source = local_address;
@@ -120,19 +120,19 @@ void route__send_hello(){
   packet.route_control[0] = ROUTE_HELLO;
 
   len = cache_len__crit(neighbor_cache);
-  neighbor_list = (struct route_neighbor_t*)cache_get_list__crit(neighbor_cache);
+  neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
 
   for(i=0;i<len;i++){
-    if(neighbor_list[i].state == NEIGHBOR_BIDIRECTIONAL || neighbor_list[i].state == NEIGHBOR_MPR){
-      *(uint32_t*)(&packet.payload[j++*4]) = *(uint32_t*)(&neighbor_list[i]);
+    if(neighbor_list[i]->state == NEIGHBOR_BIDIRECTIONAL || neighbor_list[i]->state == NEIGHBOR_MPR){
+      *(uint32_t*)(&packet.payload[j++*4]) = *(uint32_t*)(neighbor_list[i]);
     }
   }
 
   *(uint32_t*)(&packet.payload[j++*4]) = 0;
 
   for(i=0;i<len;i++){
-    if(neighbor_list[i].state == NEIGHBOR_HEARD){
-      *(uint32_t*)(&packet.payload[j++*4]) = *(uint32_t*)(&neighbor_list[i]);
+    if(neighbor_list[i]->state == NEIGHBOR_HEARD){
+      *(uint32_t*)(&packet.payload[j++*4]) = *(uint32_t*)(neighbor_list[i]);
     }
   }
 
@@ -164,7 +164,7 @@ void* route__run(void* params){
 
 int route_init(struct sahn_config_t* config){
   route_update_links();
-  neighbor_cache = cache_create(sizeof(struct route_neighbor_t),free);
+  neighbor_cache = cache_create(free);
 
   pthread_create(&route_thread,NULL,route__run,NULL);
 

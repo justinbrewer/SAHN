@@ -35,7 +35,6 @@ struct cache_t {
   bool sort;
   cache_free_t free_callback;
   pthread_rwlock_t lock;
-  size_t elem_size;
 };
 
 int cache__compare(const void* a, const void* b){
@@ -59,7 +58,7 @@ struct cache_entry_t* cache__find(struct cache_t* cache, uint32_t key){
   return NULL;
 } 
 
-struct cache_t* cache_create(size_t elem_size, cache_free_t free_callback){
+struct cache_t* cache_create(cache_free_t free_callback){
   struct cache_t* cache = (struct cache_t*)malloc(sizeof(struct cache_t));
 
   cache->num = 0;
@@ -70,7 +69,6 @@ struct cache_t* cache_create(size_t elem_size, cache_free_t free_callback){
 
   cache->sort = true;
   cache->free_callback = free_callback;
-  cache->elem_size = elem_size;
 
   pthread_rwlock_init(&cache->lock,NULL);
 
@@ -165,8 +163,8 @@ uint32_t cache_len(struct cache_t* cache){
   return len;
 }
 
-void* cache_get_list(struct cache_t* cache){
-  void* ret;
+void** cache_get_list(struct cache_t* cache){
+  void** ret;
 
   pthread_rwlock_rdlock(&cache->lock);
 
@@ -295,12 +293,12 @@ uint32_t cache_len__crit(struct cache_t* cache){
   return cache->num;
 }
 
-void* cache_get_list__crit(struct cache_t* cache){
+void** cache_get_list__crit(struct cache_t* cache){
   int i;
-  void* list = malloc(cache->num * cache->elem_size);
+  void** list = (void**)malloc(cache->num * sizeof(void*));
 
   for(i=0;i<cache->num;i++){
-    memcpy(list + i*cache->elem_size, cache->entries[i].val, cache->elem_size);
+    list[i] = cache->entries[i].val;
   }
 
   return list;

@@ -44,7 +44,7 @@ int udp_init(struct sahn_config_t* config){
 
   topo_free_node(local_node);
 
-  addr_cache = cache_create(sizeof(struct addrinfo),(cache_free_t)freeaddrinfo);
+  addr_cache = cache_create((cache_free_t)freeaddrinfo);
   return 0;
 }
 
