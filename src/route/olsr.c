@@ -48,7 +48,7 @@ void* route__run(void* params){
 
 int route_init(struct sahn_config_t* config){
   route_update_links();
-  neighbor_cache = cache_init(free);
+  neighbor_cache = cache_create(sizeof(struct route_neighbor_t),free);
 
   pthread_create(&route_thread,NULL,route__run,NULL);
 

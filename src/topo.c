@@ -103,7 +103,7 @@ int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* co
 
   topo_local_address = local_address;
 
-  node_cache = cache_create(free);
+  node_cache = cache_create(sizeof(struct topo_node_t),free);
   topo__update_nodes();
 
   topo_drop_divisor = config->node_range;

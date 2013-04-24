@@ -23,7 +23,7 @@
 struct cache_t;
 typedef void (*cache_free_t)(void*);
 
-struct cache_t* cache_create(cache_free_t free_callback);
+struct cache_t* cache_create(size_t elem_size, cache_free_t free_callback);
 int cache_destroy(struct cache_t* cache);
 
 int cache_enable_sort(struct cache_t* cache);
@@ -34,6 +34,7 @@ void* cache_get(struct cache_t* cache, uint32_t key);
 int cache_set(struct cache_t* cache, uint32_t key, void* val);
 int cache_delete(struct cache_t* cache, uint32_t key);
 uint32_t cache_len(struct cache_t* cache);
+void* cache_get_list(struct cache_t* cache);
 
 int cache_lock(struct cache_t* cache);
 int cache_unlock(struct cache_t* cache);
@@ -46,3 +47,4 @@ void* cache_get__crit(struct cache_t* cache, uint32_t key);
 int cache_set__crit(struct cache_t* cache, uint32_t key, void* val);
 int cache_delete__crit(struct cache_t* cache, uint32_t key);
 uint32_t cache_len__crit(struct cache_t* cache);
+void* cache_get_list__crit(struct cache_t* cache);
