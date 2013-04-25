@@ -71,6 +71,8 @@ struct cache_t* rtable;
 
 uint16_t seq_thr_high;
 uint16_t seq_thr_low;
+double neighbor_timeout;
+double tc_timeout;
 
 void route__free_neighbor(struct route_neighbor_t* n){
   if(n->bidir != NULL){
@@ -103,7 +105,7 @@ void route__check_expiry(){
   neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
 
   for(i=0;i<len;i++){
-    if(difftime(time(NULL),neighbor_list[i]->last_heard) > 10.0){
+    if(difftime(time(NULL),neighbor_list[i]->last_heard) > neighbor_timeout){
       if(set_remove(mpr_selector,neighbor_list[i]->address)){
 	mpr_seq++;
 	mpr_changed = true;
@@ -119,7 +121,7 @@ void route__check_expiry(){
   tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
 
   for(i=0;i<len;i++){
-    if(difftime(time(NULL),tc_list[i]->last_seen) > 10.0){
+    if(difftime(time(NULL),tc_list[i]->last_seen) > tc_timeout){
       cache_delete__crit(tc_table,tc_list[i]->destination);
       rt_update = true;
     }
@@ -324,6 +326,8 @@ int route_init(struct sahn_config_t* config){
 
   seq_thr_high = config->seq_threshold_high;
   seq_thr_low = config->seq_threshold_low;
+  neighbor_timeout = config->olsr_neighbor_timeout;
+  tc_timeout = config->olsr_tc_timeout;
 
   pthread_create(&route_thread,NULL,route__run,NULL);
 

@@ -24,6 +24,9 @@ struct sahn_config_t {
 
   uint16_t seq_threshold_low;
   uint16_t seq_threshold_high;
+
+  double olsr_neighbor_timeout;
+  double olsr_tc_timeout;
 };
 
 struct sahn_config_t* sahn_config_create();
