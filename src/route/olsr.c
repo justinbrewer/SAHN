@@ -58,6 +58,21 @@ void route__free_neighbor(struct route_neighbor_t* n){
   free(n);
 }
 
+int route__broadcast(struct net_packet_t* packet){
+  int i;
+  uint16_t destination = packet->destination, source = packet->source, prev_hop = packet->prev_hop;
+
+  packet->prev_hop = local_address;
+
+  net_hton(packet);
+  for(i=0;i<num_physical_links;i++){
+    if(physical_links[i] != destination && physical_links[i] != prev_hop){
+      udp_send(physical_links[i],packet,packet->size);
+    }
+  }
+  net_ntoh(packet);
+}
+
 void route__check_expiry(){
   int i,len;
   struct route_neighbor_t** neighbor_list;
@@ -155,10 +170,7 @@ void route__send_hello(){
 
   packet.size = NET_HEADER_SIZE + j*4;
 
-  net_hton(&packet);
-  for(i=0;i<num_physical_links;i++){
-    udp_send(physical_links[i],&packet,packet.size);
-  }
+  route__broadcast(&packet);
 
   free(neighbor_list);
 }
@@ -184,10 +196,7 @@ void route__send_tc(){
 
   packet.size = NET_HEADER_SIZE + i*2;
 
-  net_hton(&packet);
-  for(i=0;i<num_physical_links;i++){
-    udp_send(physical_links[i],&packet,packet.size);
-  }
+  route__broadcast(&packet);
 }
 
 void* route__run(void* params){
