@@ -86,7 +86,7 @@ int route__broadcast(struct net_packet_t* packet){
 
   net_hton(packet);
   for(i=0;i<num_physical_links;i++){
-    if(physical_links[i] != destination && physical_links[i] != prev_hop){
+    if(physical_links[i] != source && physical_links[i] != prev_hop){
       udp_send(physical_links[i],packet,packet->size);
     }
   }
