@@ -188,7 +188,7 @@ void route__send_hello(){
 }
 
 void route__send_tc(){
-  int i=0,j;
+  int i;
   struct net_packet_t packet = {0};
 
   if(!mpr_changed){
@@ -199,11 +199,10 @@ void route__send_tc(){
   packet.source = local_address;
   packet.destination = 0xFFFF;
   packet.route_control[0] = ROUTE_TC;
+  packet.seq = mpr_seq;
 
-  *(uint16_t*)(&packet.payload[i++*2]) = mpr_seq;
-
-  for(j=0;j<mpr_selector->num;j++){
-    *(uint16_t*)(&packet.payload[i++*2]) = mpr_selector->values[j];
+  for(i=0;i<mpr_selector->num;i++){
+    *(uint16_t*)(&packet.payload[i*2]) = mpr_selector->values[i];
   }
 
   packet.size = NET_HEADER_SIZE + i*2;
