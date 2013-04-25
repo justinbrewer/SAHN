@@ -15,9 +15,9 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cache.h"
 #include "topo.h"
 #include "udp.h"
+#include "util/cache.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -33,7 +33,7 @@ struct cache_t* addr_cache;
 
 int udp_init(struct sahn_config_t* config){
   struct sockaddr_in addr = {0};
-  struct topo_node* local_node = topo_get_local_node();
+  struct topo_node_t* local_node = topo_get_local_node();
 
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = INADDR_ANY;
@@ -56,7 +56,7 @@ int udp_cleanup(){
 
 int udp_send(uint16_t destination, void* data, uint32_t data_size){
   struct addrinfo hints = {0}, *addr;
-  struct topo_node* node;
+  struct topo_node_t* node;
 
   addr = cache_get(addr_cache,destination);
 

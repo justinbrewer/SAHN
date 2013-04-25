@@ -17,39 +17,26 @@
 
 #pragma once
 
-#include "sahn.h"
-
+#include <stddef.h>
 #include <stdint.h>
 
-#define TOPO_PRANGE 256
-#define TOPO_PMASK 0xFF
-
-struct topo_coord {
-  int16_t x;
-  int16_t y;
+struct set_t {
+  int* values;
+  size_t num;
+  size_t cap;
 };
 
-struct topo_node {
-  uint16_t address;
+struct set_t* set_create();
+struct set_t* set_wrap(int* values, size_t num);
+int set_destroy(struct set_t* set);
 
-  struct topo_coord loc;
+int set_add(struct set_t* set, int value);
+int set_remove(struct set_t* set, int value);
 
-  uint16_t num_links;
-  uint16_t* links;
+struct set_t* set_union(struct set_t* a, struct set_t* b);
+size_t set_union_size(struct set_t* a, struct set_t* b);
+size_t set_intersect_size(struct set_t* a, struct set_t* b);
 
-  char real_address[64];
-  char real_port[8];
-};
-
-int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config);
-int topo_cleanup();
-
-struct topo_node* topo_get_local_node();
-struct topo_node* topo_get_node(uint16_t address);
-unsigned int topo_get_num_nodes();
-
-uint32_t topo_drop_rate(uint16_t remote_node);
-
-struct topo_node* topo_alloc_node();
-struct topo_node* topo_copy_node(struct topo_node* node);
-int topo_free_node(struct topo_node* node);
+int* set_union__raw(int* a, size_t a_size, int* b, size_t b_size, size_t* c_size);
+size_t set_union_size__raw(int* a, size_t a_size, int* b, size_t b_size);
+size_t set_intersect_size__raw(int* a, size_t a_size, int* b, size_t b_size);

@@ -17,18 +17,39 @@
 
 #pragma once
 
-#include <string.h>
+#include "sahn.h"
+
 #include <stdint.h>
 
-struct cache_t;
-typedef void (*cache_free_t)(void*);
+#define TOPO_PRANGE 256
+#define TOPO_PMASK 0xFF
 
-struct cache_t* cache_create(cache_free_t free_callback);
-int cache_destroy(struct cache_t* cache);
+struct topo_coord_t {
+  int16_t x;
+  int16_t y;
+};
 
-int cache_enable_sort(struct cache_t* cache);
-int cache_disable_sort(struct cache_t* cache);
+struct topo_node_t {
+  uint16_t address;
 
-void* cache_get(struct cache_t* cache, uint32_t key);
-int cache_set(struct cache_t* cache, uint32_t key, void* val);
-uint32_t cache_len(struct cache_t* cache);
+  struct topo_coord_t loc;
+
+  uint16_t num_links;
+  uint16_t* links;
+
+  char real_address[64];
+  char real_port[8];
+};
+
+int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config);
+int topo_cleanup();
+
+struct topo_node_t* topo_get_local_node();
+struct topo_node_t* topo_get_node(uint16_t address);
+unsigned int topo_get_num_nodes();
+
+uint32_t topo_drop_rate(uint16_t remote_node);
+
+struct topo_node_t* topo_alloc_node();
+struct topo_node_t* topo_copy_node(struct topo_node_t* node);
+int topo_free_node(struct topo_node_t* node);

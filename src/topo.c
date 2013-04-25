@@ -15,38 +15,44 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "cache.h"
+#include "route.h"
 #include "topo.h"
+#include "util/cache.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+//#include <sys/inotify.h>
 
-#define MAX_NODES 128
+//#define EVENT_BUFFER_LEN (1024*(sizeof(struct inotify_event)+16))
 #define MAX_LINKS 32
 
 char* topo_file;
 
 struct cache_t* node_cache;
-struct topo_node* topo_local_node;
+struct topo_node_t* topo_local_node;
+uint16_t topo_local_address;
 
 unsigned int topo_drop_divisor;
 
-int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config){
+pthread_t topo_node_thread;
+//int topo_inotify_fd;
+
+int topo__update_nodes(){
   char links_buf[64], *link;
   FILE* fp;
-  struct topo_node* node;
+  struct topo_node_t* node;
 
-  node_cache = cache_create(free);
-  cache_disable_sort(node_cache);
-
-  topo_file = (char*)malloc(strlen(file)+1);
-  strcpy(topo_file,file);
+  cache_lock(node_cache);
+  cache_flush__crit(node_cache);
+  cache_disable_sort__crit(node_cache);
+  
   fp = fopen(topo_file,"r");
-
+  
   while(!feof(fp)){
-    node = (struct topo_node*)malloc(sizeof(struct topo_node));
-
+    node = (struct topo_node_t*)malloc(sizeof(struct topo_node_t));
+    
     fscanf(fp,"Node %hu %64[^,], %8s %hd %hd links %64[^\n]\n",
 	   &node->address,
 	   &node->real_address,
@@ -63,33 +69,72 @@ int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* co
     }
     node->links = (uint16_t*)realloc(node->links,node->num_links*sizeof(uint16_t));
 
-    cache_set(node_cache,node->address,node);
+    cache_set__crit(node_cache,node->address,node);
   }
   fclose(fp);
 
-  cache_enable_sort(node_cache);
+  cache_enable_sort__crit(node_cache);
+  cache_unlock(node_cache);
 
-  topo_local_node = cache_get(node_cache,local_address);
+  topo_local_node = cache_get(node_cache,topo_local_address);
+
+  return 0;
+}
+
+void* topo__run(void* params){
+  //int len;
+  //uint8_t event_buffer[EVENT_BUFFER_LEN];
+  while(1){
+    //len = read(topo_inotify_fd,event_buffer,EVENT_BUFFER_LEN);
+
+    //if(len < 0){
+      //TODO: Error
+      //continue;
+    //}
+
+    topo__update_nodes();
+    route_update_links();
+
+    sleep(1);
+  }
+}
+
+int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* config){
+  topo_file = (char*)malloc(strlen(file)+1);
+  strcpy(topo_file,file);
+
+  topo_local_address = local_address;
+
+  node_cache = cache_create(free);
+  topo__update_nodes();
 
   topo_drop_divisor = config->node_range;
   topo_drop_divisor *= topo_drop_divisor;
   topo_drop_divisor >>= 4;
   topo_drop_divisor *= topo_drop_divisor;
 
+  //topo_inotify_fd = inotify_init();
+  //inotify_add_watch(topo_inotify_fd,topo_file,IN_MODIFY);
+  pthread_create(&topo_node_thread,NULL,topo__run,NULL);
+
   return 0;
 }
 
 int topo_cleanup(){
+  pthread_cancel(topo_node_thread);
+  pthread_join(topo_node_thread,NULL);
+  //close(topo_inotify_fd);
+
   free(topo_file);
   cache_destroy(node_cache);
   return 0;
 }
 
-struct topo_node* topo_get_local_node(){
+struct topo_node_t* topo_get_local_node(){
   return topo_copy_node(topo_local_node);
 }
 
-struct topo_node* topo_get_node(uint16_t address){
+struct topo_node_t* topo_get_node(uint16_t address){
   return topo_copy_node(cache_get(node_cache,address));
 }
 
@@ -99,8 +144,8 @@ unsigned int topo_get_num_nodes(){
 
 uint32_t topo_drop_rate(uint16_t remote_node){
   int x, y;
-  const struct topo_coord* a = &topo_local_node->loc;
-  const struct topo_coord* b = &((struct topo_node*)cache_get(node_cache,remote_node))->loc;
+  const struct topo_coord_t* a = &topo_local_node->loc;
+  const struct topo_coord_t* b = &((struct topo_node_t*)cache_get(node_cache,remote_node))->loc;
 
   x = a->x - b->x;
   x *= x;
@@ -112,19 +157,19 @@ uint32_t topo_drop_rate(uint16_t remote_node){
   return x / topo_drop_divisor;
 }
 
-struct topo_node* topo_alloc_node(){
-  struct topo_node* node = (struct topo_node*)malloc(sizeof(struct topo_node));
-  memset(node,0,sizeof(struct topo_node));
+struct topo_node_t* topo_alloc_node(){
+  struct topo_node_t* node = (struct topo_node_t*)malloc(sizeof(struct topo_node_t));
+  memset(node,0,sizeof(struct topo_node_t));
   return node;
 }
 
-struct topo_node* topo_copy_node(struct topo_node* node){
+struct topo_node_t* topo_copy_node(struct topo_node_t* node){
   if(node == NULL){
     return NULL;
   }
 
-  struct topo_node* res = topo_alloc_node();
-  memcpy(res,node,sizeof(struct topo_node));
+  struct topo_node_t* res = topo_alloc_node();
+  memcpy(res,node,sizeof(struct topo_node_t));
 
   res->links = (uint16_t*)malloc(res->num_links*sizeof(uint16_t));
   memcpy(res->links,node->links,res->num_links*sizeof(uint16_t));
@@ -132,7 +177,7 @@ struct topo_node* topo_copy_node(struct topo_node* node){
   return res;
 }
 
-int topo_free_node(struct topo_node* node){
+int topo_free_node(struct topo_node_t* node){
   if(node->links != NULL){
     free(node->links);
   }
