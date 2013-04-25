@@ -303,8 +303,6 @@ int route_control_packet(struct net_packet_t* packet){
     neighbor->bidir = set_create();
 
     while((*(uint32_t*)(&j) = *(uint32_t*)(&packet->payload[i++*4])) != 0){
-      set_add(neighbor->bidir,j.address);
-
       if(j.address == local_address){
 	neighbor->state = NEIGHBOR_BIDIRECTIONAL;
 
@@ -322,6 +320,8 @@ int route_control_packet(struct net_packet_t* packet){
 	  }
 	  break;
 	}
+      }else{
+	set_add(neighbor->bidir,j.address);
       }
     }
 
