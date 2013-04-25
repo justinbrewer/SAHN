@@ -64,6 +64,7 @@ uint16_t mpr_seq;
 bool mpr_changed;
 struct set_t* mpr_selector;
 
+time_t tc_last_sent;
 struct cache_t* tc_table;
 
 bool rt_update;
@@ -272,10 +273,11 @@ void route__send_tc(){
   int i;
   struct net_packet_t packet = {0};
 
-  if(!mpr_changed){
+  if(!mpr_changed || difftime(time(NULL),tc_last_sent) < 5.0){
     return;
   }
   mpr_changed = false;
+  tc_last_sent = time(NULL);
 
   packet.source = local_address;
   packet.destination = 0xFFFF;
