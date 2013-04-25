@@ -237,6 +237,7 @@ int route_cleanup(){
   pthread_cancel(route_thread);
   pthread_join(route_thread,NULL);
 
+  set_destroy(mpr_selector);
   cache_destroy(neighbor_cache);
   free(physical_links);
 
