@@ -43,6 +43,7 @@ struct tc_entry_t {
   uint16_t destination;
   uint16_t last_hop;
   uint16_t seq;
+  time_t last_seen;
 };
 
 struct rt_entry_t {
@@ -96,6 +97,7 @@ int route__broadcast(struct net_packet_t* packet){
 void route__check_expiry(){
   int i,len;
   struct route_neighbor_t** neighbor_list;
+  struct tc_entry_t** tc_list;
 
   len = cache_len__crit(neighbor_cache);
   neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
@@ -112,6 +114,18 @@ void route__check_expiry(){
   }
 
   free(neighbor_list);
+
+  len = cache_len__crit(tc_table);
+  tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
+
+  for(i=0;i<len;i++){
+    if(difftime(time(NULL),tc_list[i]->last_seen) > 10.0){
+      cache_delete__crit(tc_table,tc_list[i]->destination);
+      rt_update = true;
+    }
+  }
+
+  free(tc_list);
 }
 
 void route__update_mpr(){
@@ -447,6 +461,7 @@ int route_control_packet(struct net_packet_t* packet){
       tc_entry->destination = *(uint16_t*)(&packet->payload[i]);
       tc_entry->last_hop = packet->source;
       tc_entry->seq = packet->seq;
+      tc_entry->last_seen = time(NULL);
       cache_set__crit(tc_table,tc_entry->destination,tc_entry);
     }
 
