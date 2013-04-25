@@ -169,7 +169,7 @@ void route__update_rtable(){
   int i,len,h=1;
   struct route_neighbor_t** neighbor_list;
   struct tc_entry_t **tc_list, *tc_entry;
-  struct rt_entry_t rt_entry = {0}, *rt_check;
+  struct rt_entry_t *rt_entry, *rt_check;
 
   if(!rt_update){
     return;
@@ -181,11 +181,12 @@ void route__update_rtable(){
   len = cache_len__crit(neighbor_cache);
   neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
 
-  rt_entry.distance = h;
   for(i=0;i<len;i++){
-    rt_entry.destination = neighbor_list[i]->address;
-    rt_entry.next_hop = neighbor_list[i]->address;
-    cache_set__crit(rtable,rt_entry.destination,&rt_entry);
+    rt_entry = (struct rt_entry_t*)malloc(sizeof(struct rt_entry_t));
+    rt_entry->destination = neighbor_list[i]->address;
+    rt_entry->next_hop = neighbor_list[i]->address;
+    rt_entry->distance = h;
+    cache_set__crit(rtable,rt_entry->destination,rt_entry);
   }
 
   free(neighbor_list);
@@ -200,10 +201,11 @@ void route__update_rtable(){
 	if(rt_check != NULL && rt_check->distance == h){
 	  done = false;
 
-	  rt_entry.destination = tc_list[i]->destination;
-	  rt_entry.next_hop = tc_list[i]->last_hop;
-	  rt_entry.distance = h+1;
-	  cache_set__crit(rtable,rt_entry.destination,&rt_entry);
+	  rt_entry = (struct rt_entry_t*)malloc(sizeof(struct rt_entry_t));
+	  rt_entry->destination = tc_list[i]->destination;
+	  rt_entry->next_hop = tc_list[i]->last_hop;
+	  rt_entry->distance = h+1;
+	  cache_set__crit(rtable,rt_entry->destination,rt_entry);
 	}
       }
     }
