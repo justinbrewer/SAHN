@@ -1,5 +1,5 @@
 VERSION = $(shell git rev-parse --short HEAD)
-ROUTE ?= flood
+ROUTE ?= olsr
 
 CC = gcc
 CFLAGS = -c -fpic -fvisibility=hidden -Isrc -pthread
@@ -14,7 +14,7 @@ BINDIR = bin
 
 OBJ = $(OBJDIR)/sahn.o $(OBJDIR)/topo.o $(OBJDIR)/udp.o $(OBJDIR)/net.o \
       $(OBJDIR)/seq.o $(OBJDIR)/util/queue.o $(OBJDIR)/util/cache.o \
-      $(OBJDIR)/route/$(ROUTE).o
+      $(OBJDIR)/util/set.o $(OBJDIR)/route/$(ROUTE).o
 
 all: debug
 
@@ -75,6 +75,9 @@ $(OBJDIR)/util/queue.o: src/util/queue.h src/util/queue.c
 
 $(OBJDIR)/util/cache.o: src/util/cache.h src/util/cache.c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/util/cache.o src/util/cache.c
+
+$(OBJDIR)/util/set.o: src/util/set.h src/util/set.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/util/set.o src/util/set.c
 
 $(OBJDIR)/route/$(ROUTE).o: src/route.h src/route/$(ROUTE).c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/route/$(ROUTE).o src/route/$(ROUTE).c
