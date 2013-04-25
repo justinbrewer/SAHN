@@ -461,5 +461,15 @@ int route_control_packet(struct net_packet_t* packet){
 }
 
 int route_dispatch_packet(struct net_packet_t* packet){
+  struct rt_entry_t* rt_entry = (struct rt_entry_t*)cache_get(rtable,packet->destination);
+
+  if(rt_entry == NULL){
+    //No route, drop =(
+    return -1;
+  }
+
+  packet->prev_hop = local_address;
+  udp_send(rt_entry->next_hop,packet,packet->size);
+
   return 0;
 }
