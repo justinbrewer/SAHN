@@ -82,6 +82,10 @@ void route__check_expiry(){
 
   for(i=0;i<len;i++){
     if(difftime(time(NULL),neighbor_list[i]->last_heard) > 10.0){
+      if(set_remove(mpr_selector,neighbor_list[i]->address)){
+	mpr_seq++;
+	mpr_changed = true;
+      }
       cache_delete__crit(neighbor_cache,neighbor_list[i]->address);
     }
   }
