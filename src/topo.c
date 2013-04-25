@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/inotify.h>
+//#include <sys/inotify.h>
 
-#define EVENT_BUFFER_LEN (1024*(sizeof(struct inotify_event)+16))
+//#define EVENT_BUFFER_LEN (1024*(sizeof(struct inotify_event)+16))
 #define MAX_LINKS 32
 
 char* topo_file;
@@ -37,7 +37,7 @@ uint16_t topo_local_address;
 unsigned int topo_drop_divisor;
 
 pthread_t topo_node_thread;
-int topo_inotify_fd;
+//int topo_inotify_fd;
 
 int topo__update_nodes(){
   char links_buf[64], *link;
@@ -82,18 +82,20 @@ int topo__update_nodes(){
 }
 
 void* topo__run(void* params){
-  int len;
-  uint8_t event_buffer[EVENT_BUFFER_LEN];
+  //int len;
+  //uint8_t event_buffer[EVENT_BUFFER_LEN];
   while(1){
-    len = read(topo_inotify_fd,event_buffer,EVENT_BUFFER_LEN);
+    //len = read(topo_inotify_fd,event_buffer,EVENT_BUFFER_LEN);
 
-    if(len < 0){
+    //if(len < 0){
       //TODO: Error
-      continue;
-    }
+      //continue;
+    //}
 
     topo__update_nodes();
     route_update_links();
+
+    sleep(1);
   }
 }
 
@@ -111,8 +113,8 @@ int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* co
   topo_drop_divisor >>= 4;
   topo_drop_divisor *= topo_drop_divisor;
 
-  topo_inotify_fd = inotify_init();
-  inotify_add_watch(topo_inotify_fd,topo_file,IN_MODIFY);
+  //topo_inotify_fd = inotify_init();
+  //inotify_add_watch(topo_inotify_fd,topo_file,IN_MODIFY);
   pthread_create(&topo_node_thread,NULL,topo__run,NULL);
 
   return 0;
@@ -121,7 +123,7 @@ int topo_init(const char* file, uint16_t local_address, struct sahn_config_t* co
 int topo_cleanup(){
   pthread_cancel(topo_node_thread);
   pthread_join(topo_node_thread,NULL);
-  close(topo_inotify_fd);
+  //close(topo_inotify_fd);
 
   free(topo_file);
   cache_destroy(node_cache);
