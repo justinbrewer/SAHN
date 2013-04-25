@@ -45,6 +45,12 @@ struct tc_entry_t {
   uint16_t seq;
 };
 
+struct rt_entry_t {
+  uint16_t destination;
+  uint16_t next_hop;
+  uint16_t distance;
+};
+
 pthread_t route_thread;
 
 uint16_t local_address;
@@ -58,6 +64,9 @@ bool mpr_changed;
 struct set_t* mpr_selector;
 
 struct cache_t* tc_table;
+
+bool rt_update;
+struct cache_t* rtable;
 
 void route__free_neighbor(struct route_neighbor_t* n){
   if(n->bidir != NULL){
@@ -93,6 +102,7 @@ void route__check_expiry(){
       if(set_remove(mpr_selector,neighbor_list[i]->address)){
 	mpr_seq++;
 	mpr_changed = true;
+	rt_update = true;
       }
       cache_delete__crit(neighbor_cache,neighbor_list[i]->address);
     }
@@ -154,6 +164,56 @@ void route__update_mpr(){
   free(neighbor_list);
 }
 
+void route__update_rtable(){
+  bool done = false;
+  int i,len,h=1;
+  struct route_neighbor_t** neighbor_list;
+  struct tc_entry_t **tc_list, *tc_entry;
+  struct rt_entry_t rt_entry = {0}, *rt_check;
+
+  if(!rt_update){
+    return;
+  }
+  rt_update = false;
+
+  cache_flush__crit(rtable);
+
+  len = cache_len__crit(neighbor_cache);
+  neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
+
+  rt_entry.distance = h;
+  for(i=0;i<len;i++){
+    rt_entry.destination = neighbor_list[i]->address;
+    rt_entry.next_hop = neighbor_list[i]->address;
+    cache_set__crit(rtable,rt_entry.destination,&rt_entry);
+  }
+
+  free(neighbor_list);
+
+  len = cache_len__crit(tc_table);
+  tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
+
+  while(!done){
+    for(i=0,done=true;i<len;i++){
+      if(cache_get__crit(rtable,tc_list[i]->destination) == NULL){
+	rt_check = cache_get__crit(rtable,tc_list[i]->last_hop);
+	if(rt_check != NULL && rt_check->distance == h){
+	  done = false;
+
+	  rt_entry.destination = tc_list[i]->destination;
+	  rt_entry.next_hop = tc_list[i]->last_hop;
+	  rt_entry.distance = h+1;
+	  cache_set__crit(rtable,rt_entry.destination,&rt_entry);
+	}
+      }
+    }
+
+    h++;
+  }
+
+  free(tc_list);
+}
+
 void route__send_hello(){
   int i,j=0,len;
   struct route_neighbor_t** neighbor_list;
@@ -213,12 +273,17 @@ void route__send_tc(){
 void* route__run(void* params){
   while(1){
     cache_lock(neighbor_cache);
+    cache_lock(tc_table);
+    cache_lock(rtable);
 
     route__check_expiry();
     route__update_mpr();
+    route__update_rtable();
     route__send_hello();
     route__send_tc();
 
+    cache_unlock(rtable);
+    cache_unlock(tc_table);
     cache_unlock(neighbor_cache);
 
     sleep(1);
@@ -236,6 +301,7 @@ int route_init(struct sahn_config_t* config){
   mpr_selector = set_create();
 
   tc_table = cache_create(free);
+  rtable = cache_create(free);
 
   pthread_create(&route_thread,NULL,route__run,NULL);
 
@@ -246,6 +312,7 @@ int route_cleanup(){
   pthread_cancel(route_thread);
   pthread_join(route_thread,NULL);
 
+  cache_destroy(rtable);
   cache_destroy(tc_table);
   set_destroy(mpr_selector);
   cache_destroy(neighbor_cache);
@@ -311,12 +378,14 @@ int route_control_packet(struct net_packet_t* packet){
 	  if(set_add(mpr_selector,packet->source)){
 	    mpr_seq++;
 	    mpr_changed = true;
+	    rt_update = true;
 	  }
 	  break;
 	case NEIGHBOR_BIDIRECTIONAL:
 	  if(set_remove(mpr_selector,packet->source)){
 	    mpr_seq++;
 	    mpr_changed = true;
+	    rt_update = true;
 	  }
 	  break;
 	}
@@ -372,6 +441,8 @@ int route_control_packet(struct net_packet_t* packet){
       tc_entry->seq = packet->seq;
       cache_set__crit(tc_table,tc_entry->destination,tc_entry);
     }
+
+    rt_update = true;
 
     if(mpr_selector->num > 0){
       route__broadcast(packet);
