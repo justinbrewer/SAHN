@@ -39,6 +39,12 @@ struct route_neighbor_t {
   struct set_t* bidir;
 } __attribute__((packed));
 
+struct tc_entry_t {
+  uint16_t destination;
+  uint16_t last_hop;
+  uint16_t seq;
+};
+
 pthread_t route_thread;
 
 uint16_t local_address;
@@ -50,6 +56,8 @@ struct cache_t* neighbor_cache;
 uint16_t mpr_seq;
 bool mpr_changed;
 struct set_t* mpr_selector;
+
+struct cache_t* tc_table;
 
 void route__free_neighbor(struct route_neighbor_t* n){
   if(n->bidir != NULL){
@@ -228,6 +236,8 @@ int route_init(struct sahn_config_t* config){
   mpr_changed = false;
   mpr_selector = set_create();
 
+  tc_table = cache_create(free);
+
   pthread_create(&route_thread,NULL,route__run,NULL);
 
   return 0;
@@ -237,6 +247,7 @@ int route_cleanup(){
   pthread_cancel(route_thread);
   pthread_join(route_thread,NULL);
 
+  cache_destroy(tc_table);
   set_destroy(mpr_selector);
   cache_destroy(neighbor_cache);
   free(physical_links);
@@ -263,12 +274,17 @@ int route_update_links(){
 }
 
 int route_control_packet(struct net_packet_t* packet){
-  int i, cap, addr;
+  int i, cap, addr, len;
+  bool old;
   struct route_neighbor_t *neighbor, j;
+  struct tc_entry_t **tc_list, *tc_entry;
+
+  cache_lock(neighbor_cache);
+  cache_lock(tc_table);
 
   switch(packet->route_control[0]){
   case ROUTE_HELLO:
-    cache_lock(neighbor_cache);
+    
     neighbor = cache_get__crit(neighbor_cache,packet->source);
 
     if(neighbor == NULL){
@@ -317,14 +333,59 @@ int route_control_packet(struct net_packet_t* packet){
     }
 
     neighbor->last_heard = time(NULL);
-    cache_unlock(neighbor_cache);
     break;
 
   case ROUTE_TC:
+
+    len = cache_len__crit(tc_table);
+    tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
+
+    for(i=0,old=false;i<len;i++){
+      if(tc_list[i]->last_hop == packet->source){
+        if(tc_list[i]->seq > packet->seq){
+	  old = true;
+	  break;
+	}
+      }
+    }
+
+    if(old){
+      break;
+    }
+
+    for(i=0;i<len;i++){
+      if(tc_list[i]->last_hop == packet->source){
+	if(tc_list[i]->seq < packet->seq){
+	  cache_delete__crit(tc_table,tc_list[i--]->destination);
+	  len = cache_len__crit(tc_table);
+	  free(tc_list);
+	  tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
+	}
+      }
+    }
+
+    free(tc_list);
+
+    for(i=0;i<packet->size-NET_HEADER_SIZE;i+=2){
+      tc_entry = (struct tc_entry_t*)malloc(sizeof(struct tc_entry_t*));
+      tc_entry->destination = *(uint16_t*)(&packet->payload[i]);
+      tc_entry->last_hop = packet->source;
+      tc_entry->seq = packet->seq;
+      cache_set__crit(tc_table,tc_entry->destination,tc_entry);
+    }
+
+    if(mpr_selector->num > 0){
+      route__broadcast(packet);
+    }
+
     break;
+
   default:
     break;
   }
+
+  cache_unlock(tc_table);
+  cache_unlock(neighbor_cache);
 
   return 0;
 }
