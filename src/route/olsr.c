@@ -462,9 +462,9 @@ int route_control_packet(struct net_packet_t* packet){
 
     free(tc_list);
 
-    for(i=0;i<packet->size-NET_HEADER_SIZE;i+=2){
+    while((addr = *(uint16_t*)(&packet->payload[i++*2]))){
       tc_entry = (struct tc_entry_t*)malloc(sizeof(struct tc_entry_t*));
-      tc_entry->destination = *(uint16_t*)(&packet->payload[i]);
+      tc_entry->destination = addr;
       tc_entry->last_hop = packet->source;
       tc_entry->seq = packet->seq;
       tc_entry->last_seen = time(NULL);
