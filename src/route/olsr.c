@@ -471,6 +471,8 @@ int route_dispatch_packet(struct net_packet_t* packet){
   }
 
   packet->prev_hop = local_address;
+
+  net_hton(packet);
   udp_send(rt_entry->next_hop,packet,packet->size);
 
   return 0;
