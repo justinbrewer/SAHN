@@ -68,6 +68,9 @@ struct cache_t* tc_table;
 bool rt_update;
 struct cache_t* rtable;
 
+uint16_t seq_thr_high;
+uint16_t seq_thr_low;
+
 void route__free_neighbor(struct route_neighbor_t* n){
   if(n->bidir != NULL){
     set_destroy(n->bidir);
@@ -305,6 +308,9 @@ int route_init(struct sahn_config_t* config){
   tc_table = cache_create(free);
   rtable = cache_create(free);
 
+  seq_thr_high = config->seq_threshold_high;
+  seq_thr_low = config->seq_threshold_low;
+
   pthread_create(&route_thread,NULL,route__run,NULL);
 
   return 0;
@@ -412,7 +418,7 @@ int route_control_packet(struct net_packet_t* packet){
 
     for(i=0,old=false;i<len;i++){
       if(tc_list[i]->last_hop == packet->source){
-        if(tc_list[i]->seq > packet->seq){
+        if(tc_list[i]->seq > packet->seq && (tc_list[i]->seq < seq_thr_high || packet->seq > seq_thr_low)){
 	  old = true;
 	  break;
 	}
