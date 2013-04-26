@@ -277,7 +277,7 @@ void route__send_tc(){
     return;
   }
 
-  if(!mpr_changed || difftime(time(NULL),tc_last_sent) < 5.0){
+  if(!mpr_changed && difftime(time(NULL),tc_last_sent) < 2.0){
     return;
   }
   mpr_changed = false;
@@ -304,7 +304,7 @@ void* route__run(void* params){
     cache_lock(tc_table);
     cache_lock(rtable);
 
-    //route__check_expiry();
+    route__check_expiry();
     route__update_mpr();
     route__update_rtable();
     route__send_hello();
