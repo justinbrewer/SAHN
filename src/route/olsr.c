@@ -43,6 +43,7 @@ struct tc_entry_t {
   uint16_t destination;
   uint16_t last_hop;
   uint16_t seq;
+  time_t last_seen;
 };
 
 struct rt_entry_t {
@@ -63,10 +64,16 @@ uint16_t mpr_seq;
 bool mpr_changed;
 struct set_t* mpr_selector;
 
+time_t tc_last_sent;
 struct cache_t* tc_table;
 
 bool rt_update;
 struct cache_t* rtable;
+
+uint16_t seq_thr_high;
+uint16_t seq_thr_low;
+double neighbor_timeout;
+double tc_timeout;
 
 void route__free_neighbor(struct route_neighbor_t* n){
   if(n->bidir != NULL){
@@ -83,7 +90,7 @@ int route__broadcast(struct net_packet_t* packet){
 
   net_hton(packet);
   for(i=0;i<num_physical_links;i++){
-    if(physical_links[i] != destination && physical_links[i] != prev_hop){
+    if(physical_links[i] != source && physical_links[i] != prev_hop){
       udp_send(physical_links[i],packet,packet->size);
     }
   }
@@ -93,12 +100,13 @@ int route__broadcast(struct net_packet_t* packet){
 void route__check_expiry(){
   int i,len;
   struct route_neighbor_t** neighbor_list;
+  struct tc_entry_t** tc_list;
 
   len = cache_len__crit(neighbor_cache);
   neighbor_list = (struct route_neighbor_t**)cache_get_list__crit(neighbor_cache);
 
   for(i=0;i<len;i++){
-    if(difftime(time(NULL),neighbor_list[i]->last_heard) > 10.0){
+    if(difftime(time(NULL),neighbor_list[i]->last_heard) > neighbor_timeout){
       if(set_remove(mpr_selector,neighbor_list[i]->address)){
 	mpr_seq++;
 	mpr_changed = true;
@@ -109,6 +117,18 @@ void route__check_expiry(){
   }
 
   free(neighbor_list);
+
+  len = cache_len__crit(tc_table);
+  tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
+
+  for(i=0;i<len;i++){
+    if(difftime(time(NULL),tc_list[i]->last_seen) > tc_timeout){
+      cache_delete__crit(tc_table,tc_list[i]->destination);
+      rt_update = true;
+    }
+  }
+
+  free(tc_list);
 }
 
 void route__update_mpr(){
@@ -196,7 +216,7 @@ void route__update_rtable(){
 
   while(!done){
     for(i=0,done=true;i<len;i++){
-      if(cache_get__crit(rtable,tc_list[i]->destination) == NULL){
+      if(tc_list[i]->destination != local_address && cache_get__crit(rtable,tc_list[i]->destination) == NULL){
 	rt_check = cache_get__crit(rtable,tc_list[i]->last_hop);
 	if(rt_check != NULL && rt_check->distance == h){
 	  done = false;
@@ -253,10 +273,15 @@ void route__send_tc(){
   int i;
   struct net_packet_t packet = {0};
 
-  if(!mpr_changed){
+  if(mpr_selector->num == 0){
+    return;
+  }
+
+  if(!mpr_changed && difftime(time(NULL),tc_last_sent) < 2.0){
     return;
   }
   mpr_changed = false;
+  tc_last_sent = time(NULL);
 
   packet.source = local_address;
   packet.destination = 0xFFFF;
@@ -267,6 +292,7 @@ void route__send_tc(){
     *(uint16_t*)(&packet.payload[i*2]) = mpr_selector->values[i];
   }
 
+  *(uint16_t*)(&packet.payload[i++*2]) = 0;
   packet.size = NET_HEADER_SIZE + i*2;
 
   route__broadcast(&packet);
@@ -304,6 +330,11 @@ int route_init(struct sahn_config_t* config){
 
   tc_table = cache_create(free);
   rtable = cache_create(free);
+
+  seq_thr_high = config->seq_threshold_high;
+  seq_thr_low = config->seq_threshold_low;
+  neighbor_timeout = config->olsr_neighbor_timeout;
+  tc_timeout = config->olsr_tc_timeout;
 
   pthread_create(&route_thread,NULL,route__run,NULL);
 
@@ -412,7 +443,7 @@ int route_control_packet(struct net_packet_t* packet){
 
     for(i=0,old=false;i<len;i++){
       if(tc_list[i]->last_hop == packet->source){
-        if(tc_list[i]->seq > packet->seq){
+        if(!(tc_list[i]->seq < packet->seq || (tc_list[i]->seq > seq_thr_high && packet->seq < seq_thr_low))){
 	  old = true;
 	  break;
 	}
@@ -426,22 +457,21 @@ int route_control_packet(struct net_packet_t* packet){
     for(i=0;i<len;i++){
       if(tc_list[i]->last_hop == packet->source){
 	if(tc_list[i]->seq < packet->seq){
-	  cache_delete__crit(tc_table,tc_list[i--]->destination);
-	  len = cache_len__crit(tc_table);
-	  free(tc_list);
-	  tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
+	  cache_delete__crit(tc_table,tc_list[i]->destination);
 	}
       }
     }
 
     free(tc_list);
 
-    for(i=0;i<packet->size-NET_HEADER_SIZE;i+=2){
+    i=0;
+    while((addr = *(uint16_t*)(&packet->payload[i++*2]))){
       tc_entry = (struct tc_entry_t*)malloc(sizeof(struct tc_entry_t*));
-      tc_entry->destination = *(uint16_t*)(&packet->payload[i]);
+      tc_entry->destination = addr;
       tc_entry->last_hop = packet->source;
       tc_entry->seq = packet->seq;
-      cache_set__crit(tc_table,tc_entry->destination,tc_entry);
+      tc_entry->last_seen = time(NULL);
+      cache_set__crit(tc_table,(((uint32_t)tc_entry->destination)<<16)|(tc_entry->last_hop),tc_entry);
     }
 
     rt_update = true;

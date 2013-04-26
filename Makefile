@@ -1,4 +1,4 @@
-VERSION = 0.4
+VERSION = 0.4.1
 ROUTE ?= olsr
 
 CC = gcc

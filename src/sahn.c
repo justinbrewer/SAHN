@@ -35,6 +35,8 @@ struct sahn_config_t* sahn_config_create(){
   config->node_range = 128;
   config->seq_threshold_low = 16;
   config->seq_threshold_high = 65520;
+  config->olsr_neighbor_timeout = 10.0;
+  config->olsr_tc_timeout = 10.0;
 
   return config;
 }
