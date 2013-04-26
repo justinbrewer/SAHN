@@ -53,7 +53,7 @@ int set_add(struct set_t* set, int value){
 
   if(pos == NULL){
     if(set->cap == set->num){
-      set->cap = (set->cap*3)/2;
+      set->cap = set->cap*2;
       set->values = (int*)realloc(set->values,set->cap*sizeof(int));
     }
     set->values[set->num++] = value;
@@ -69,12 +69,12 @@ int set_remove(struct set_t* set, int value){
   int* pos = bsearch(&value,set->values,set->num,sizeof(int),set__compare);
 
   if(pos != NULL){
-    if(pos == &set->values[set->num-1]){
+    index = pos - set->values;
+    if(index == set->num-1){
       *pos = 0;
       set->num--;
     } else {
-      index = (pos - set->values)/sizeof(int);
-      memmove(pos,pos+sizeof(int),(set->num - index)*sizeof(int));
+      memmove(pos,pos+1,(set->num - index)*sizeof(int));
     }
     return 1;
   }
@@ -126,12 +126,12 @@ int* set_union__raw(int* a, size_t a_size, int* b, size_t b_size, size_t* c_size
   c = (int*)malloc((*c_size)*sizeof(int));
 
   for(k=0;k<(*c_size);k++){
-    if(a[i] < b[j]){
+    if(j == b_size || a[i] < b[j]){
       c[k] = a[i++];
       continue;
     }
 
-    if(a[i] > b[j]){
+    if(i == a_size || a[i] > b[j]){
       c[k] = b[j++];
       continue;
     }

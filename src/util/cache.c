@@ -276,10 +276,10 @@ int cache_delete__crit(struct cache_t* cache, uint32_t key){
     cache->free_callback(entry->val);
   }
 
-  index = (entry - cache->entries)/sizeof(struct cache_entry_t);
+  index = entry - cache->entries;
 
   if(index != cache->num - 1){
-    memmove(entry,entry+sizeof(struct cache_entry_t),(cache->num - index)*sizeof(struct cache_entry_t));
+    memmove(entry,entry+1,(cache->num - index)*sizeof(struct cache_entry_t));
   } else {
     memset(entry,0,sizeof(struct cache_entry_t));
   }

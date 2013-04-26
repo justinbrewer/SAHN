@@ -273,6 +273,10 @@ void route__send_tc(){
   int i;
   struct net_packet_t packet = {0};
 
+  if(mpr_selector->num == 0){
+    return;
+  }
+
   if(!mpr_changed || difftime(time(NULL),tc_last_sent) < 5.0){
     return;
   }
@@ -300,7 +304,7 @@ void* route__run(void* params){
     cache_lock(tc_table);
     cache_lock(rtable);
 
-    route__check_expiry();
+    //route__check_expiry();
     route__update_mpr();
     route__update_rtable();
     route__send_hello();
@@ -418,9 +422,8 @@ int route_control_packet(struct net_packet_t* packet){
 	  }
 	  break;
 	}
-      }else{
-	set_add(neighbor->bidir,j.address);
       }
+      set_add(neighbor->bidir,j.address);
     }
 
     for(i=0;i<packet->size-NET_HEADER_SIZE;i+=4){
@@ -439,7 +442,7 @@ int route_control_packet(struct net_packet_t* packet){
 
     for(i=0,old=false;i<len;i++){
       if(tc_list[i]->last_hop == packet->source){
-        if(tc_list[i]->seq > packet->seq && (tc_list[i]->seq < seq_thr_high || packet->seq > seq_thr_low)){
+        if(!(tc_list[i]->seq < packet->seq || (tc_list[i]->seq > seq_thr_high && packet->seq < seq_thr_low))){
 	  old = true;
 	  break;
 	}
@@ -453,16 +456,14 @@ int route_control_packet(struct net_packet_t* packet){
     for(i=0;i<len;i++){
       if(tc_list[i]->last_hop == packet->source){
 	if(tc_list[i]->seq < packet->seq){
-	  cache_delete__crit(tc_table,tc_list[i--]->destination);
-	  len = cache_len__crit(tc_table);
-	  free(tc_list);
-	  tc_list = (struct tc_entry_t**)cache_get_list__crit(tc_table);
+	  cache_delete__crit(tc_table,tc_list[i]->destination);
 	}
       }
     }
 
     free(tc_list);
 
+    i=0;
     while((addr = *(uint16_t*)(&packet->payload[i++*2]))){
       tc_entry = (struct tc_entry_t*)malloc(sizeof(struct tc_entry_t*));
       tc_entry->destination = addr;
