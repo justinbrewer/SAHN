@@ -216,7 +216,7 @@ void route__update_rtable(){
 
   while(!done){
     for(i=0,done=true;i<len;i++){
-      if(cache_get__crit(rtable,tc_list[i]->destination) == NULL){
+      if(tc_list[i]->destination != local_address && cache_get__crit(rtable,tc_list[i]->destination) == NULL){
 	rt_check = cache_get__crit(rtable,tc_list[i]->last_hop);
 	if(rt_check != NULL && rt_check->distance == h){
 	  done = false;
@@ -422,8 +422,9 @@ int route_control_packet(struct net_packet_t* packet){
 	  }
 	  break;
 	}
+      }else{
+	set_add(neighbor->bidir,j.address);
       }
-      set_add(neighbor->bidir,j.address);
     }
 
     for(i=0;i<packet->size-NET_HEADER_SIZE;i+=4){

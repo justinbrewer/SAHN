@@ -72,10 +72,10 @@ int set_remove(struct set_t* set, int value){
     index = pos - set->values;
     if(index == set->num-1){
       *pos = 0;
-      set->num--;
     } else {
       memmove(pos,pos+1,(set->num - index)*sizeof(int));
     }
+    set->num--;
     return 1;
   }
 
