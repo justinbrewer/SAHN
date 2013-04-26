@@ -288,6 +288,7 @@ void route__send_tc(){
     *(uint16_t*)(&packet.payload[i*2]) = mpr_selector->values[i];
   }
 
+  *(uint16_t*)(&packet.payload[i++*2]) = 0;
   packet.size = NET_HEADER_SIZE + i*2;
 
   route__broadcast(&packet);
