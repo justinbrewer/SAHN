@@ -471,7 +471,7 @@ int route_control_packet(struct net_packet_t* packet){
       tc_entry->last_hop = packet->source;
       tc_entry->seq = packet->seq;
       tc_entry->last_seen = time(NULL);
-      cache_set__crit(tc_table,tc_entry->destination,tc_entry);
+      cache_set__crit(tc_table,(((uint32_t)tc_entry->destination)<<16)|(tc_entry->last_hop),tc_entry);
     }
 
     rt_update = true;
